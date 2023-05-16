@@ -12,10 +12,11 @@ import os
 from pprint import pprint
 import math
 import sys
+from pathlib import Path
 sys.path.append(os.getcwd())
 sys.path.append(str(Path(os.getcwd()).parent))
 import training as T
-from pathlib import Path
+
 
 
 seed = int(sys.argv[1])
