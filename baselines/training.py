@@ -33,8 +33,8 @@ def training(nn, loss_fn, optimizer, X_train, y_train, X_valid, y_valid, X_test,
             early_stop = True
             break
         
-    if not epoch % 100:
-        print(f'epoch: {epoch:-8d} | train loss: {loss_train:.5e} | valid loss: {loss_valid:.5e} | train acc: {acc_train:.4f} | valid acc: {acc_valid:.4f} | test acc: {acc_test:.4f} | patience: {patience}')
+        if (epoch % 100)==0:
+            print(f'epoch: {epoch:-8d} | train loss: {loss_train:.5e} | valid loss: {loss_valid:.5e} | train acc: {acc_train:.4f} | valid acc: {acc_valid:.4f} | test acc: {acc_test:.4f} | patience: {patience}')
 
     if early_stop:
         return best_nn
