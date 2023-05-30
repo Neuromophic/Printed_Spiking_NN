@@ -1,5 +1,6 @@
 import torch
 import math
+import snntorch as snn
 
 def training(nn, loss_fn, optimizer, X_train, y_train, X_valid, y_valid, X_test, y_test):
     early_stop = False
@@ -35,6 +36,49 @@ def training(nn, loss_fn, optimizer, X_train, y_train, X_valid, y_valid, X_test,
             break
         
         if (epoch % 100)==0:
+            print(f'epoch: {epoch:-8d} | train loss: {loss_train:.5e} | valid loss: {loss_valid:.5e} | train acc: {acc_train:.4f} | valid acc: {acc_valid:.4f} | test acc: {acc_test:.4f} | patience: {patience}')
+        
+        epoch += 1
+        
+    if early_stop:
+        return best_nn
+    else:
+        return False
+    
+def training_snn(nn, loss_fn, optimizer, X_train, y_train, X_valid, y_valid, X_test, y_test):
+    early_stop = False
+    best_loss = math.inf
+    patience = 0
+    epoch = 0
+    
+    while not early_stop:
+        y_pred_train = nn(X_train)
+        loss_train = loss_fn(y_pred_train, y_train)
+        acc_train = (nn.spikes.sum(2).argmax(dim=1) == y_train).float().mean()
+        optimizer.zero_grad()
+        loss_train.backward()
+        optimizer.step()
+
+        with torch.no_grad():
+            y_pred_valid = nn(X_valid)
+            loss_valid = loss_fn(y_pred_valid, y_valid)
+            acc_valid = (nn.spikes.sum(2).argmax(dim=1) == y_valid).float().mean()
+
+            y_pred_test = nn(X_test)
+            acc_test = (nn.spikes.sum(2).argmax(dim=1) == y_test).float().mean()
+
+        if loss_valid < best_loss:
+            best_loss = loss_valid
+            best_nn = nn
+            patience = 0
+        else:
+            patience += 1
+        
+        if patience > 500:
+            early_stop = True
+            break
+        
+        if (epoch % 10)==0:
             print(f'epoch: {epoch:-8d} | train loss: {loss_train:.5e} | valid loss: {loss_valid:.5e} | train acc: {acc_train:.4f} | valid acc: {acc_valid:.4f} | test acc: {acc_test:.4f} | patience: {patience}')
         
         epoch += 1
@@ -86,3 +130,155 @@ class cnn(torch.nn.Module):
 
     def forward(self, X):
         return self.model(X)
+    
+
+
+# Define Network
+class SNN(torch.nn.Module):
+    def __init__(self, num_inputs, num_hidden, num_outputs):
+        super().__init__()
+
+        # initialize layers
+        self.snnlayer1 = torch.nn.ModuleList()
+        for i in range(num_inputs):
+            self.snnlayer1.append(snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                                            threshold=torch.rand([]), learn_threshold=True))
+        self.fc1 = torch.nn.Linear(num_inputs, num_hidden)
+        self.snnlayer2 = torch.nn.ModuleList()
+        for i in range(num_hidden):
+            self.snnlayer2.append(snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                                            threshold=torch.rand([]), learn_threshold=True))
+        self.fc2 = torch.nn.Linear(num_hidden, num_outputs)
+        self.snnlayer3 = torch.nn.ModuleList()
+        for i in range(num_outputs):
+            self.snnlayer3.append(snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                                            threshold=torch.rand([]), learn_threshold=True))
+        
+    def pass_sigle_sn(self, input, sn):
+        num_steps = input.shape[1]
+        mem = sn.init_leaky()
+
+        spk_rec = []  # Record the output trace of spikes
+        mem_rec = []  # Record the output trace of membrane potential
+        
+        for step in range(num_steps):
+            spk, mem = sn(input[:,step], mem)
+            spk_rec.append(spk)
+            mem_rec.append(mem)
+
+        return torch.stack(spk_rec).T, torch.stack(mem_rec).T
+    
+    def pass_layer(self, input, snlist):
+        spk_rec = []
+        mem_rec = []
+        for i in range(len(snlist)):
+            spk, mem = self.pass_sigle_sn(input[:,i,:], snlist[i])
+            spk_rec.append(spk)
+            mem_rec.append(mem)
+        return torch.stack(spk_rec, dim=1), torch.stack(mem_rec, dim=1)
+
+    def temproal_mac(self, x, mac):
+        num_steps = x.shape[2]
+        out = []
+        for step in range(num_steps):
+            out.append(mac(x[:,:,step]))
+        return torch.stack(out, dim=2)
+
+    def forward(self, x):
+        num_steps = x.shape[2]
+        
+        x, mem = self.pass_layer(x, self.snnlayer1)
+        x = self.temproal_mac(x, self.fc1)
+        x, mem = self.pass_layer(x, self.snnlayer2)
+        x = self.temproal_mac(x, self.fc2)
+        x, mem = self.pass_layer(x, self.snnlayer3)
+        self.spikes = x
+        self.mem = mem
+        return mem
+    
+
+class SNN2(torch.nn.Module):
+    def __init__(self, num_inputs, num_hidden, num_outputs):
+        super().__init__()
+
+        # initialize layers
+        self.lif1 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                              threshold=torch.rand([]), learn_threshold=True)
+        self.fc1 = torch.nn.Linear(num_inputs, num_hidden)
+        self.lif2 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                              threshold=torch.rand([]), learn_threshold=True)
+        self.fc2 = torch.nn.Linear(num_hidden, num_outputs)
+        self.lif3 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                              threshold=torch.rand([]), learn_threshold=True)
+
+    def forward(self, x):
+        num_steps = x.shape[2]
+
+        mem1 = self.lif1.init_leaky()
+        mem2 = self.lif2.init_leaky()
+        mem3 = self.lif3.init_leaky()
+
+        spk_rec = []  # Record the output trace of spikes
+        mem_rec = []  # Record the output trace of membrane potential
+
+        for step in range(num_steps):
+            spk1, mem1 = self.lif1(x[:,:,step], mem1)
+            curl1 = self.fc1(spk1)
+            spk2, mem2 = self.lif2(curl1, mem2)
+            curl2 = self.fc2(spk2)
+            spk3, mem3 = self.lif3(curl2, mem3)
+            spk_rec.append(spk3)
+            mem_rec.append(mem3)
+        self.spikes = torch.stack(spk_rec, dim=1)
+        self.mem = torch.stack(mem_rec, dim=1)
+        return self.mem
+    
+
+class SNN3(torch.nn.Module):
+    def __init__(self, num_inputs, num_hidden, num_outputs):
+        super().__init__()
+
+        self.fc1 = torch.nn.Linear(num_inputs, num_hidden)
+        self.lif2 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                              threshold=torch.rand([]), learn_threshold=True)
+        self.fc2 = torch.nn.Linear(num_hidden, num_outputs)
+        self.lif3 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
+                              threshold=torch.rand([]), learn_threshold=True)
+
+    def forward(self, x):
+        num_steps = x.shape[2]
+
+        mem2 = self.lif2.init_leaky()
+        mem3 = self.lif3.init_leaky()
+
+        spk_rec = []  # Record the output trace of spikes
+        mem_rec = []  # Record the output trace of membrane potential
+
+        for step in range(num_steps):
+            curl1 = self.fc1(x[:,:,step])
+            spk2, mem2 = self.lif2(curl1, mem2)
+            curl2 = self.fc2(spk2)
+            spk3, mem3 = self.lif3(curl2, mem3)
+            spk_rec.append(spk3)
+            mem_rec.append(mem3)
+        self.spikes = torch.stack(spk_rec, dim=1)
+        self.mem = torch.stack(mem_rec, dim=1)
+        return self.mem
+    
+
+class SNNLoss(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+        self.loss_fn = torch.nn.CrossEntropyLoss()
+        
+    def forward(self, output, label):
+        num_steps = output.shape[2]
+        
+        L = torch.tensor(0.)
+        
+        for step in range(num_steps):
+            L += self.loss_fn(output[:,:,step], label)
+            
+        return L / num_steps
+    
