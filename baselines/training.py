@@ -134,7 +134,7 @@ class cnn(torch.nn.Module):
 
 
 # Define Network
-class SNN(torch.nn.Module):
+class SNN1(torch.nn.Module):
     def __init__(self, num_inputs, num_hidden, num_outputs):
         super().__init__()
 
