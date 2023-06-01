@@ -1,0 +1,10 @@
+sbatch baseline_SNN3.py 0
+sbatch baseline_SNN3.py 1
+sbatch baseline_SNN3.py 2
+sbatch baseline_SNN3.py 3
+sbatch baseline_SNN3.py 4
+sbatch baseline_SNN3.py 5
+sbatch baseline_SNN3.py 6
+sbatch baseline_SNN3.py 7
+sbatch baseline_SNN3.py 8
+sbatch baseline_SNN3.py 9
