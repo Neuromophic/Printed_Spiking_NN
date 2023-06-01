@@ -134,7 +134,7 @@ class cnn(torch.nn.Module):
 
 
 # Define Network
-class SNN(torch.nn.Module):
+class SNN1(torch.nn.Module):
     def __init__(self, num_inputs, num_hidden, num_outputs):
         super().__init__()
 
@@ -142,17 +142,17 @@ class SNN(torch.nn.Module):
         self.snnlayer1 = torch.nn.ModuleList()
         for i in range(num_inputs):
             self.snnlayer1.append(snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                                            threshold=torch.rand([]), learn_threshold=True))
+                                            threshold=torch.rand([]), learn_threshold=True, init_hidden=True))
         self.fc1 = torch.nn.Linear(num_inputs, num_hidden)
         self.snnlayer2 = torch.nn.ModuleList()
         for i in range(num_hidden):
             self.snnlayer2.append(snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                                            threshold=torch.rand([]), learn_threshold=True))
+                                            threshold=torch.rand([]), learn_threshold=True, init_hidden=True))
         self.fc2 = torch.nn.Linear(num_hidden, num_outputs)
         self.snnlayer3 = torch.nn.ModuleList()
         for i in range(num_outputs):
             self.snnlayer3.append(snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                                            threshold=torch.rand([]), learn_threshold=True))
+                                            threshold=torch.rand([]), learn_threshold=True, init_hidden=True))
         
     def pass_sigle_sn(self, input, sn):
         num_steps = input.shape[1]
@@ -203,13 +203,13 @@ class SNN2(torch.nn.Module):
 
         # initialize layers
         self.lif1 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                              threshold=torch.rand([]), learn_threshold=True)
+                              threshold=torch.rand([]), learn_threshold=True, init_hidden=True)
         self.fc1 = torch.nn.Linear(num_inputs, num_hidden)
         self.lif2 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                              threshold=torch.rand([]), learn_threshold=True)
+                              threshold=torch.rand([]), learn_threshold=True, init_hidden=True)
         self.fc2 = torch.nn.Linear(num_hidden, num_outputs)
         self.lif3 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                              threshold=torch.rand([]), learn_threshold=True)
+                              threshold=torch.rand([]), learn_threshold=True, init_hidden=True)
 
     def forward(self, x):
         num_steps = x.shape[2]
@@ -229,8 +229,8 @@ class SNN2(torch.nn.Module):
             spk3, mem3 = self.lif3(curl2, mem3)
             spk_rec.append(spk3)
             mem_rec.append(mem3)
-        self.spikes = torch.stack(spk_rec, dim=1)
-        self.mem = torch.stack(mem_rec, dim=1)
+        self.spikes = torch.stack(spk_rec, dim=2)
+        self.mem = torch.stack(mem_rec, dim=2)
         return self.mem
     
 
@@ -240,10 +240,10 @@ class SNN3(torch.nn.Module):
 
         self.fc1 = torch.nn.Linear(num_inputs, num_hidden)
         self.lif2 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                              threshold=torch.rand([]), learn_threshold=True)
+                              threshold=torch.rand([]), learn_threshold=True, init_hidden=True)
         self.fc2 = torch.nn.Linear(num_hidden, num_outputs)
         self.lif3 = snn.Leaky(beta=torch.rand([]), learn_beta=True,
-                              threshold=torch.rand([]), learn_threshold=True)
+                              threshold=torch.rand([]), learn_threshold=True, init_hidden=True)
 
     def forward(self, x):
         num_steps = x.shape[2]
@@ -261,8 +261,8 @@ class SNN3(torch.nn.Module):
             spk3, mem3 = self.lif3(curl2, mem3)
             spk_rec.append(spk3)
             mem_rec.append(mem3)
-        self.spikes = torch.stack(spk_rec, dim=1)
-        self.mem = torch.stack(mem_rec, dim=1)
+        self.spikes = torch.stack(spk_rec, dim=2)
+        self.mem = torch.stack(mem_rec, dim=2)
         return self.mem
     
 
