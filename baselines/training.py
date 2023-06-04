@@ -266,19 +266,3 @@ class SNN3(torch.nn.Module):
         return self.mem
     
 
-class SNNLoss(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        
-        self.loss_fn = torch.nn.CrossEntropyLoss()
-        
-    def forward(self, output, label):
-        num_steps = output.shape[2]
-        
-        L = torch.tensor(0.)
-        
-        for step in range(num_steps):
-            L += self.loss_fn(output[:,:,step], label)
-            
-        return L / num_steps
-    
