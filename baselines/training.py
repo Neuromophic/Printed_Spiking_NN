@@ -54,7 +54,7 @@ def training_snn(nn, loss_fn, optimizer, X_train, y_train, X_valid, y_valid, X_t
     while not early_stop:
         y_pred_train = nn(X_train)
         loss_train = loss_fn(y_pred_train, y_train)
-        acc_train = (nn.spikes.sum(2).argmax(dim=1) == y_train).float().mean()
+        acc_train = (y_pred_train.sum(2).argmax(dim=1) == y_train).float().mean()
         optimizer.zero_grad()
         loss_train.backward()
         optimizer.step()
@@ -62,10 +62,10 @@ def training_snn(nn, loss_fn, optimizer, X_train, y_train, X_valid, y_valid, X_t
         with torch.no_grad():
             y_pred_valid = nn(X_valid)
             loss_valid = loss_fn(y_pred_valid, y_valid)
-            acc_valid = (nn.spikes.sum(2).argmax(dim=1) == y_valid).float().mean()
+            acc_valid = (y_pred_valid.sum(2).argmax(dim=1) == y_valid).float().mean()
 
             y_pred_test = nn(X_test)
-            acc_test = (nn.spikes.sum(2).argmax(dim=1) == y_test).float().mean()
+            acc_test = (y_pred_test.sum(2).argmax(dim=1) == y_test).float().mean()
 
         if loss_valid < best_loss:
             best_loss = loss_valid
