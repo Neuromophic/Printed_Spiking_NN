@@ -12,12 +12,12 @@ class SpikingNeuron(torch.nn.Module):
         if beta is None:
             beta = torch.rand(1)
         beta_ = torch.log(beta / (1 - beta))
-        self.beta_ = torch.nn.Parameter(beta_, requires_grad=True)
+        self.beta_ = torch.nn.Parameter(beta_, requires_grad=False)
         
         # initialize threshold
         if threshold is None:
             threshold = torch.rand(1)
-        self.threshold = torch.nn.Parameter(threshold, requires_grad=True)
+        self.threshold = torch.nn.Parameter(threshold, requires_grad=False)
 
         # whether to initialize the initial state randomly for simulating unknown previous state
         # this is especially useful for signals split by sliding windows
@@ -33,7 +33,7 @@ class SpikingNeuron(torch.nn.Module):
         # forward is 0/1 spike
         forward = (surplus >= 0).float()
         # backward is sigmoid relaxation
-        backward = torch.sigmoid(surplus * 5.)
+        backward = torch.sigmoid(surplus * 10.)
         return forward.detach() + backward - backward.detach()
     
     def StateUpdate(self, x):
@@ -47,7 +47,7 @@ class SpikingNeuron(torch.nn.Module):
     
     def StatePostupdate(self):
         # update the state of neuron after firing
-        return self.memory - self.fire.detach() * self.threshold.detach()    
+        return self.memory - self.fire.detach() * self.threshold   
 
     def SingleStepForward(self, x):
         self.memory = self.StateUpdate(x)
@@ -113,7 +113,7 @@ class TemporalWeightedSum(torch.nn.Module):
     def __init__(self, N_in, N_out):
         super().__init__()
         # this paameter contrains both weights and bias
-        self.weight = torch.nn.Parameter(torch.rand(N_in+1, N_out)/100.)
+        self.weight = torch.nn.Parameter(torch.randn(N_in+1, N_out)/10.)
     
     def forward(self, x):
         # extend the input with 1 for bias
@@ -131,33 +131,33 @@ class TemporalWeightedSum(torch.nn.Module):
 #===============================================================================
 
 class SpikingNeuralNetwork(torch.nn.Module):
-    def __init__(self, topology, beta=None, threshold=None, random_state=True, spike_only=True):
+    def __init__(self, topology, beta=None, threshold=None, random_state=True):
         super().__init__()
         # create snn with weighted-sum and spiking neurons
         self.model = torch.nn.Sequential()
         for i in range(len(topology)-1):
             self.model.add_module('MAC'+str(i), TemporalWeightedSum(topology[i], topology[i+1]))
             self.model.add_module('SNNLayer'+str(i), SpikingLayer(topology[i+1], beta, threshold, random_state))
-        # in the complete spiking neural network, the output should be spike only
-        self.spike_only = spike_only
+        self.InitOutput()
 
     def forward(self, x):
         return self.model(x)
     
-    def ResetOutput(self, spike_only, Layer=None):
-        self.spike_only = spike_only
-        if Layer is None:
-            for layer in self.model:
-                if hasattr(layer, 'ResetOutput'):
+    def InitOutput(self):
+        for layer in self.model:
+            if hasattr(layer, 'ResetOutput'):
+                layer.ResetOutput(True)
+        self.model[-1].ResetOutput(False)
+
+    def ResetOutput(self, Layer, spike_only=False):
+        self.InitOutput()
+        for l, layer in enumerate(self.model):
+            if l==Layer:
+                try:
                     layer.ResetOutput(spike_only)
-        else:
-            for l, layer in enumerate(self.model):
-                if l==Layer:
-                    try:
-                        layer.ResetOutput(spike_only)
-                        print(f"Reset output of layer {str(Layer)}.")
-                    except:
-                        print(f"Layer {str(Layer)} is not a spiking layer, it has no attribute 'ResetOutput'.")
+                    print(f"The memory of layer {str(Layer)} will be output.")
+                except:
+                    print(f"Layer {str(Layer)} is not a spiking layer, it has no attribute 'ResetOutput'.")
 
 
 #===============================================================================
@@ -171,12 +171,9 @@ class SNNLoss(torch.nn.Module):
         self.loss_fn = torch.nn.CrossEntropyLoss()
         
     def forward(self, output, label):
-        num_steps = output.shape[2]
-            
-        L = torch.tensor(0.)
-        
-        for step in range(num_steps):
-            L += self.loss_fn(output[:,:,step], label)
-        return L / num_steps
+        L = []       
+        for step in range(output.shape[2]):
+            L.append(self.loss_fn(output[:,:,step], label))
+        return torch.stack(L).mean()
         
     
