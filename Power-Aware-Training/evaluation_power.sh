@@ -1,0 +1,13 @@
+sbatch evaluation.py --DATASET 0  --DEVICE cpu
+sbatch evaluation.py --DATASET 1  --DEVICE cpu
+sbatch evaluation.py --DATASET 2  --DEVICE cpu
+sbatch evaluation.py --DATASET 3  --DEVICE cpu
+sbatch evaluation.py --DATASET 4  --DEVICE cpu
+sbatch evaluation.py --DATASET 5  --DEVICE cpu
+sbatch evaluation.py --DATASET 6  --DEVICE cpu
+sbatch evaluation.py --DATASET 7  --DEVICE cpu
+sbatch evaluation.py --DATASET 8  --DEVICE cpu
+sbatch evaluation.py --DATASET 9  --DEVICE cpu
+sbatch evaluation.py --DATASET 10  --DEVICE cpu
+sbatch evaluation.py --DATASET 11  --DEVICE cpu
+sbatch evaluation.py --DATASET 12  --DEVICE cpu
