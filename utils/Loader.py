@@ -1,5 +1,4 @@
 import os
-import pickle
 import torch
 from torch.utils.data import Dataset, DataLoader
 import sys
@@ -7,15 +6,15 @@ sys.path.append(os.path.join(os.getcwd()))
 sys.path.append('../')
 
 class dataset(Dataset):
-    def __init__(self, dataset, args, datapath, mode='train'):
+    def __init__(self, dataset, args, datapath, mode='train', temporal=False):
         self.args = args
         
         if datapath is None:
             datapath = os.path.join(args.DataPath, dataset)
         else:
             datapath = os.path.join(datapath, dataset)
-        with open(datapath, 'rb') as f:
-            data = pickle.load(f)
+        
+        data = torch.load(datapath)
         
         X_train         = data['X_train']
         y_train         = data['y_train']
@@ -23,6 +22,16 @@ class dataset(Dataset):
         y_valid         = data['y_valid']
         X_test          = data['X_test']
         y_test          = data['y_test']
+
+        if temporal:
+            dimension = X_train.shape
+            if len(dimension) == 3:
+                pass
+            elif len(dimension) == 2:
+                self.N_time = args.N_time
+                X_train = X_train.repeat(args.N_time, 1, 1).permute(1,2,0)
+                X_valid = X_valid.repeat(args.N_time, 1, 1).permute(1,2,0)
+                X_test  = X_test.repeat(args.N_time, 1, 1).permute(1,2,0)
         
         if mode == 'train':
             self.X_train    = torch.cat([X_train for _ in range(args.R_train)], dim=0).to(args.DEVICE)
@@ -43,7 +52,6 @@ class dataset(Dataset):
 
         self.mode = mode
         
-
     @property
     def noisy_X_train(self):
         noise = torch.randn(self.X_train.shape) * self.args.InputNoise + 1.
@@ -80,61 +88,64 @@ class dataset(Dataset):
         elif self.mode == 'test':
             return self.N_test * self.args.R_test
         
-        
-def GetDataLoader(args, mode, path=None):
-    normal_datasets = ['Dataset_acuteinflammation.p',
-                       'Dataset_balancescale.p',
-                       'Dataset_breastcancerwisc.p',
-                       'Dataset_cardiotocography3clases.p',
-                       'Dataset_energyy1.p',
-                       'Dataset_energyy2.p',
-                       'Dataset_iris.p',
-                       'Dataset_mammographic.p',
-                       'Dataset_pendigits.p',
-                       'Dataset_seeds.p',
-                       'Dataset_tictactoe.p',
-                       'Dataset_vertebralcolumn2clases.p',
-                       'Dataset_vertebralcolumn3clases.p']
 
-    split_manufacture = ['Dataset_acuteinflammation.p',
-                         'Dataset_acutenephritis.p',
-                         'Dataset_balancescale.p',
-                         'Dataset_blood.p',
-                         'Dataset_breastcancer.p',
-                         'Dataset_breastcancerwisc.p',
-                         'Dataset_breasttissue.p',
-                         'Dataset_ecoli.p',
-                         'Dataset_energyy1.p',
-                         'Dataset_energyy2.p',
-                         'Dataset_fertility.p',
-                         'Dataset_glass.p',
-                         'Dataset_habermansurvival.p',
-                         'Dataset_hayesroth.p',
-                         'Dataset_ilpdindianliver.p',
-                         'Dataset_iris.p',
-                         'Dataset_mammographic.p',
-                         'Dataset_monks1.p',
-                         'Dataset_monks2.p',
-                         'Dataset_monks3.p',
-                         'Dataset_pima.p',
-                         'Dataset_pittsburgbridgesMATERIAL.p',
-                         'Dataset_pittsburgbridgesSPAN.p',
-                         'Dataset_pittsburgbridgesTORD.p',
-                         'Dataset_pittsburgbridgesTYPE.p',
-                         'Dataset_seeds.p',
-                         'Dataset_teaching.p',
-                         'Dataset_tictactoe.p',
-                         'Dataset_vertebralcolumn2clases.p',
-                         'Dataset_vertebralcolumn3clases.p']
+def GetDataLoader(args, mode, path=None):
+    normal_datasets = ['Dataset_acuteinflammation.ds',
+                       'Dataset_balancescale.ds',
+                       'Dataset_breastcancerwisc.ds',
+                       'Dataset_cardiotocography3clases.ds',
+                       'Dataset_energyy1.ds',
+                       'Dataset_energyy2.ds',
+                       'Dataset_iris.ds',
+                       'Dataset_mammographic.ds',
+                       'Dataset_pendigits.ds',
+                       'Dataset_seeds.ds',
+                       'Dataset_tictactoe.ds',
+                       'Dataset_vertebralcolumn2clases.ds',
+                       'Dataset_vertebralcolumn3clases.ds']
+
+    temporized_datasets = normal_datasets
+
+    split_manufacture = ['Dataset_acuteinflammation.ds',
+                         'Dataset_acutenephritis.ds',
+                         'Dataset_balancescale.ds',
+                         'Dataset_blood.ds',
+                         'Dataset_breastcancer.ds',
+                         'Dataset_breastcancerwisc.ds',
+                         'Dataset_breasttissue.ds',
+                         'Dataset_ecoli.ds',
+                         'Dataset_energyy1.ds',
+                         'Dataset_energyy2.ds',
+                         'Dataset_fertility.ds',
+                         'Dataset_glass.ds',
+                         'Dataset_habermansurvival.ds',
+                         'Dataset_hayesroth.ds',
+                         'Dataset_ilpdindianliver.ds',
+                         'Dataset_iris.ds',
+                         'Dataset_mammographic.ds',
+                         'Dataset_monks1.ds',
+                         'Dataset_monks2.ds',
+                         'Dataset_monks3.ds',
+                         'Dataset_pima.ds',
+                         'Dataset_pittsburgbridgesMATERIAL.ds',
+                         'Dataset_pittsburgbridgesSPAN.ds',
+                         'Dataset_pittsburgbridgesTORD.ds',
+                         'Dataset_pittsburgbridgesTYPE.ds',
+                         'Dataset_seeds.ds',
+                         'Dataset_teaching.ds',
+                         'Dataset_tictactoe.ds',
+                         'Dataset_vertebralcolumn2clases.ds',
+                         'Dataset_vertebralcolumn3clases.ds']
     
     normal_datasets.sort()
+    temporized_datasets.sort()
     split_manufacture.sort()
     
     if path is None:
         path = args.DataPath
     
     datasets = os.listdir(path)
-    datasets = [f for f in datasets if (f.startswith('Dataset') and f.endswith('.p'))]
+    datasets = [f for f in datasets if (f.startswith('Dataset') and f.endswith('.ds'))]
     datasets.sort()
 
     
@@ -191,3 +202,32 @@ def GetDataLoader(args, mode, path=None):
             infos.append(info)
 
         return train_loaders, valid_loaders, test_loaders, infos
+
+    elif args.task=='temporized':
+        dataname = temporized_datasets[args.DATASET]
+        # data
+        trainset  = dataset(dataname, args, path, mode='train', temporal=True)
+        validset  = dataset(dataname, args, path, mode='valid', temporal=True)
+        testset   = dataset(dataname, args, path, mode='test', temporal=True)
+
+        # batch
+        train_loader = DataLoader(trainset, batch_size=len(trainset))
+        valid_loader = DataLoader(validset, batch_size=len(validset))
+        test_loader  = DataLoader(testset,  batch_size=len(testset))
+        
+        # message
+        info = {}
+        info['dataname'] = trainset.data_name
+        info['N_feature'] = trainset.N_feature
+        info['N_class']   = trainset.N_class
+        info['N_train']   = len(trainset)
+        info['N_valid']   = len(validset)
+        info['N_test']    = len(testset)
+        info['N_time']    = trainset.N_time
+        
+        if mode == 'train':
+            return train_loader, info
+        elif mode == 'valid':
+            return valid_loader, info
+        elif mode == 'test':
+            return test_loader, info

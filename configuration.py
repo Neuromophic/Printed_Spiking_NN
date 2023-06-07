@@ -1,7 +1,7 @@
 import argparse
 
-parser = argparse.ArgumentParser(prog = 'PowerAware',
-                                 description = 'Training for Power Efficient Printed Neural Networks')
+parser = argparse.ArgumentParser(prog = 'Printed Spiking Neural Networks',
+                                 description = 'Training for Printed Spiking Neural Networks')
 
 # printing-related hyperparameters for pNNs
 parser.add_argument('--gmin',                  type=float,     default=0.01,                  help='minimal printable conductance value')
@@ -26,7 +26,7 @@ parser.add_argument('--NEG_Ln',                type=float,     default=4.0129,  
 
 # machine-learning-related hyperparameters
 # dataset-related
-parser.add_argument('--task',                  type=str,       default='normal',              help='train normal pNN or split manufacturing')
+parser.add_argument('--task',                  type=str,       default='temporized',          help='train normal pNN or split manufacturing, or temporal information')
 parser.add_argument('--DATASET',               type=int,       default=0,                     help='index of training dataset')
 parser.add_argument('--DataPath',              type=str,       default='./dataset',           help='path to dataset')
 # data augmentation
@@ -34,6 +34,8 @@ parser.add_argument('--InputNoise',            type=float,     default=0.,      
 parser.add_argument('--IN_test',               type=float,     default=0.,                    help='noise of input signal for test')
 parser.add_argument('--R_train',               type=int,       default=1,                     help='number of sampling for input noise in training')
 parser.add_argument('--R_test',                type=int,       default=1,                     help='number of sampling for input noise in testing')
+# temporal information processing
+parser.add_argument('--N_time',                type=int,       default=32,                    help='number of sampling for temporal information processing')
 # regularization
 parser.add_argument('--pathnorm',              type=bool,      default=False,                 help='path-norm as regularization for improving robustness against input noise')
 # network-related
@@ -69,8 +71,8 @@ parser.add_argument('--N_test',                type=int,       default=1,       
 parser.add_argument('--e_test',                type=int,       default=0.,                    help='variation for testing')
 # power
 parser.add_argument('--powerestimator',        type=str,       default='power',               help='the penalty term for encouraging lower energy')
-parser.add_argument('--powerbalance',          type=float,     default=0.001,                 help='the scaling term for energy')
-parser.add_argument('--estimatorbalance',      type=float,     default=0.001,                 help='the scaling term for energy')
+parser.add_argument('--powerbalance',          type=float,     default=0.,                    help='the scaling term for energy vs. accuracy')
+parser.add_argument('--estimatorbalance',      type=float,     default=0.,                    help='the scaling term for energy & weight decay')
 parser.add_argument('--pgmin',                 type=float,     default=1e-7  ,                help='minimal printable conductance gmin')
 
 # log-file-related information

@@ -17,12 +17,20 @@ class Evaluator(torch.nn.Module):
         act, idx = torch.topk(prediction, k=2, dim=1)
         corrects = (act[:,0] >= self.sensing_margin) & (act[:,1]<=0) & (label.view(-1)==idx[:,0])
         return corrects.float().sum().item() / label.numel()
+    
+    def norminal_snn(self, output, label):
+        spk, _ = output
+        act, idx = spk.sum(2).max(dim=1)
+        corrects = (label.view(-1) == idx)
+        return corrects.float().sum().item() / label.numel()
         
     def forward(self, nn, x, label):
         if self.args.metric == 'acc':
             self.performance = self.nominal
         elif self.args.metric == 'maa':
             self.performance = self.maa
+        elif self.args.metric == 'acc_snn':
+            self.performance = self.norminal_snn
         return self.performance(nn(x), label), nn.Power()
     
   
