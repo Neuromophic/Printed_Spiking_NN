@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#SBATCH --job-name=PSNN
+#SBATCH --job-name=BSL
 #SBATCH --error=%x.%j.err
 #SBATCH --output=%x.%j.out
 #SBATCH --mail-user=hzhao@teco.edu
@@ -16,11 +16,15 @@ from configuration import *
 import torch
 import pprint
 from utils import *
-import BaselineModels as B
 
 args = parser.parse_args()
 
-for seed in range(30):
+if args.ilnc:
+    import BaselineModelsILNC as B
+else:
+    import BaselineModels as B
+
+for seed in range(50):
 
     args.SEED = seed
     args = FormulateArgs(args)
@@ -35,7 +39,7 @@ for seed in range(30):
 
     SetSeed(args.SEED)
 
-    setup = f"baseline_model_pNN_data_{datainfo['dataname']}_seed_{args.SEED}.model"
+    setup = f"baseline_model_pNN_data_{datainfo['dataname']}_seed_{args.SEED}_lnc_{args.lnc}_ilnc_False.model"
     print(f'Training setup: {setup}.')
 
     msglogger = GetMessageLogger(args, setup)
@@ -53,7 +57,7 @@ for seed in range(30):
         pnn = B.pNN(topology, args).to(args.DEVICE)
 
         lossfunction = B.pNNLoss(args).to(args.DEVICE)
-        optimizer = torch.optim.Adam(pnn.parameters(), lr=args.LR)
+        optimizer = torch.optim.Adam(pnn.GetParam(), lr=args.LR)
 
         if args.PROGRESSIVE:
             pnn, best = train_pnn_progressive(pnn, train_loader, valid_loader, lossfunction, optimizer, args, msglogger, UUID=setup)

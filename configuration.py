@@ -45,11 +45,11 @@ parser.add_argument('--SEED',                  type=int,       default=0,       
 parser.add_argument('--DEVICE',                type=str,       default='gpu',                 help='device for training')
 parser.add_argument('--PATIENCE',              type=int,       default=500,                   help='patience for early-stopping')
 parser.add_argument('--EPOCH',                 type=int,       default=10**10,                help='maximal epochs')
-parser.add_argument('--LR',                    type=float,     default=0.1,                   help='learning rate')
+parser.add_argument('--LR',                    type=float,     default=0.1,                  help='learning rate')
 parser.add_argument('--PROGRESSIVE',           type=bool,      default=True,                  help='whether the learning rate will be adjusted')
 parser.add_argument('--LR_PATIENCE',           type=int,       default=100,                   help='patience for updating learning rate')
 parser.add_argument('--LR_DECAY',              type=float,     default=0.5,                   help='decay of learning rate for progressive lr')
-parser.add_argument('--LR_MIN',                type=float,     default=1e-4,                  help='minimal learning rate for stop training')
+parser.add_argument('--LR_MIN',                type=float,     default=1e-5,                  help='minimal learning rate for stop training')
 # metrics
 parser.add_argument('--metric',                type=str,       default='acc',                 help='nominal accuracy or measuring-aware accuracy')
 # server-related
@@ -73,7 +73,11 @@ parser.add_argument('--e_test',                type=int,       default=0.,      
 parser.add_argument('--powerestimator',        type=str,       default='power',               help='the penalty term for encouraging lower energy')
 parser.add_argument('--powerbalance',          type=float,     default=0.,                    help='the scaling term for energy vs. accuracy')
 parser.add_argument('--estimatorbalance',      type=float,     default=0.,                    help='the scaling term for energy & weight decay')
-parser.add_argument('--pgmin',                 type=float,     default=1e-7  ,                help='minimal printable conductance gmin')
+parser.add_argument('--pgmin',                 type=float,     default=1e-7,                  help='minimal printable conductance gmin')
+# circuit learnability
+parser.add_argument('--lnc',                   type=bool,      default=False,                  help='shared learnable nonlinear components')
+parser.add_argument('--ilnc',                  type=bool,      default=False,                  help='independent learnable nonlinear components')
+
 
 # log-file-related information
 parser.add_argument('--projectname',           type=str,       default='project',             help='name of the project')

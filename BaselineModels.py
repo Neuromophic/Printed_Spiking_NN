@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import warnings
 
 # ================================================================================================================================================
 # =====================================================  Learnable Negative Weight Circuit  ======================================================
@@ -351,11 +352,13 @@ class pNN(torch.nn.Module):
             penalty += l.WeightDecay() / 2
         return penalty / len(self.model)
 
-    def GetParam(self, name):
-        if name == 'rt':
-            return [p for name, p in self.named_parameters() if name.endswith('.rt_')]
-        elif name == 'theta':
-            return [p for name, p in self.named_parameters() if name.endswith('.theta_')]
+    def GetParam(self):
+        weights = [p for name, p in self.named_parameters() if name.endswith('.theta_')]
+        nonlinear = [p for name, p in self.named_parameters() if name.endswith('.rt_')]
+        if self.args.lnc:
+            return weights + nonlinear
+        else:
+            return weights
 
     def SetParameter(self, name, value):
         if name == 'args':
@@ -365,7 +368,7 @@ class pNN(torch.nn.Module):
 
 
 # ================================================================================================================================================
-# ===============================================================  Loss function  ================================================================
+# =============================================================  pNN Loss function  ==============================================================
 # ================================================================================================================================================
 
 class pNNLoss(torch.nn.Module):
@@ -401,27 +404,27 @@ class pNNLoss(torch.nn.Module):
         elif self.args.powerestimator == 'none':
             return self.standard(nn(x), label)
         
-
 # ================================================================================================================================================
-# ============================================================== Long Short Term Memory ==========================================================
+# ============================================================= learnable tanh function ==========================================================
 # ================================================================================================================================================
 
-class lstm(torch.nn.Module):
-    def __init__(self, N_channel, N_class):
+class Tanh(torch.nn.Module):
+    def __init__(self):
         super().__init__()
-        self.rnn = torch.nn.LSTM(N_channel, N_class, 1, batch_first=True)
-        self.softmax = torch.nn.Softmax(dim=1)
-
-    def Power(self):
-        # this function is just used to match the evaluation
-        # the power of lstm in-silico is acutally not considered
-        return torch.zeros(1)
+        eta = torch.tensor([0., 1., 0., 1.])
+        self.eta = torch.nn.Parameter(eta, requires_grad=True)       
     
-    def forward(self, X):
-        X = X.permute(0,2,1)
-        output, (h,c) = self.rnn(X)
-        result = self.softmax(output[:,-1,:])
-        return result
+    def forward(self, x):
+        return self.eta[0] + self.eta[1] * torch.tanh((x - self.eta[2]) * self.eta[3])
+    
+class Sigmoid(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        eta = torch.tensor([0., 1., 0., 1.])
+        self.eta = torch.nn.Parameter(eta, requires_grad=True)       
+    
+    def forward(self, x):
+        return self.eta[0] + self.eta[1] * torch.sigmoid((x - self.eta[2]) * self.eta[3])
 
 # ================================================================================================================================================
 # ============================================================== Cross Entropy Loss Function =====================================================
@@ -436,16 +439,111 @@ class CELOSS(torch.nn.Module):
         return self.lossfn(nn(x), label)
     
 # ================================================================================================================================================
+# ============================================================== Long Short Term Memory ==========================================================
+# ================================================================================================================================================
+
+class LSTMCell(torch.nn.Module):
+    def __init__(self, input_size, hidden_size, sigmoid, activation):
+        super(LSTMCell, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        self.i2h = torch.nn.Linear(input_size + hidden_size, 4 * hidden_size)
+        self.h2h = torch.nn.Linear(hidden_size, 4 * hidden_size)
+        
+        self.sigmoid = sigmoid
+        self.activation = activation
+
+    def forward(self, input, hidden):
+        hx, cx = hidden
+        gates = self.i2h(torch.cat([input, hx], dim=1)) + self.h2h(hx)
+        i_gate, f_gate, c_gate, o_gate = gates.chunk(4, 1)
+
+        i_gate = self.sigmoid(i_gate)
+        f_gate = self.sigmoid(f_gate)
+        c_gate = self.activation(c_gate)
+        o_gate = self.sigmoid(o_gate)
+
+        cy = (f_gate * cx) + (i_gate * c_gate)
+        hy = o_gate * self.activation(cy)
+
+        return hy, cy
+
+class CustomLSTM(torch.nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.activation = Tanh()
+        self.sigmoid = Sigmoid()
+        self.lstm_cell = LSTMCell(input_size, hidden_size, self.sigmoid, self.activation)
+    
+    def forward(self, input_sequence, initial_states=None):
+        input_sequence = input_sequence.permute(1,0,2)
+        batch_size = input_sequence.size(1)
+        hidden_size = self.lstm_cell.hidden_size
+
+        if initial_states is None:
+            hx = torch.zeros(batch_size, hidden_size, device=input_sequence.device)
+            cx = torch.zeros(batch_size, hidden_size, device=input_sequence.device)
+        else:
+            hx, cx = initial_states
+
+        output_sequence = []
+        for i in range(input_sequence.size(0)):  # iterate over the sequence length
+            hx, cx = self.lstm_cell(input_sequence[i], (hx, cx))
+            output_sequence.append(hx)
+
+        output_sequence = torch.stack(output_sequence).permute(1,0,2)
+        return output_sequence, (hx, cx)
+
+    
+class lstm(torch.nn.Module):
+    def __init__(self, args, N_channel, N_class):
+        super().__init__()
+        self.args = args
+        self.rnn = CustomLSTM(N_channel, N_class)
+        self.softmax = torch.nn.Softmax(dim=1)
+
+    def Power(self):
+        # this function is just used to match the evaluation
+        # the power of lstm in-silico is acutally not considered
+        return torch.zeros(1)
+    
+    def forward(self, X):
+        X = X.permute(0,2,1)
+        output, (h,c) = self.rnn(X)
+        result = self.softmax(output[:,-1,:])
+        return result
+    
+    def GetParam(self):
+        weights = [p for name, p in self.named_parameters() if name.endswith('.weight') or name.endswith('bias')]
+        nonlinear = [p for name, p in self.named_parameters() if name.endswith('.eta')]
+        if self.args.lnc:
+            return weights + nonlinear
+        else:
+            return weights
+        
+    def UpdateArgs(self, args):
+        self.args = args
+        for layer in self.model:
+            if hasattr(layer, 'UpdateArgs'):
+                layer.UpdateArgs(args)
+
+
+# ================================================================================================================================================
 # ============================================================== Multi-Layer Perception ==========================================================
 # ================================================================================================================================================
 
 class mlp(torch.nn.Module):
-    def __init__(self, topology):
+    def __init__(self, args, topology):
         super().__init__()
+        self.args = args
+        
+        self.activation = Tanh()
+        
         self.model = torch.nn.Sequential()
         for i in range(len(topology)-1):
             self.model.add_module(f'{i}-th pLayer', torch.nn.Linear(topology[i], topology[i+1]))
-            self.model.add_module(f'{i}-th activation', torch.nn.Tanh())
+            self.model.add_module(f'{i}-th activation', self.activation)
     
     def Power(self):
         # this function is just used to match the evaluation
@@ -455,34 +553,46 @@ class mlp(torch.nn.Module):
     def forward(self, X):
         return self.model(X)
     
-
+    def GetParam(self):
+        weights = [p for name, p in self.named_parameters() if name.endswith('.weight') or name.endswith('bias')]
+        nonlinear = [p for name, p in self.named_parameters() if name.endswith('.eta')]
+        if self.args.lnc:
+            return weights + nonlinear
+        else:
+            return weights
+        
+    def UpdateArgs(self, args):
+        self.args = args
+        for layer in self.model:
+            if hasattr(layer, 'UpdateArgs'):
+                layer.UpdateArgs(args)
+    
 #===============================================================================
 #============================ Single Spiking Neuron ============================
 #===============================================================================
-
+    
 class SpikingNeuron(torch.nn.Module):
-    def __init__(self, beta=None, threshold=None, random_state=True):
+    def __init__(self, args, beta=None, threshold=None, random_state=True):
         super().__init__()
-        
-        # initialize beta
-        if beta is None:
-            beta = torch.rand(1)
-        beta_ = torch.log(beta / (1 - beta))
-        self.beta_ = torch.nn.Parameter(beta_, requires_grad=False)
-        
-        # initialize threshold
-        if threshold is None:
-            threshold = torch.rand(1)
-        self.threshold = torch.nn.Parameter(threshold, requires_grad=False)
+        self.args = args
+        self.beta = beta
+        self.threshold = threshold
 
         # whether to initialize the initial state randomly for simulating unknown previous state
         # this is especially useful for signals split by sliding windows
         self.random_state = random_state
-
+    
     @property
-    def beta(self):
-        # keep beta in range (0, 1)
-        return torch.sigmoid(self.beta_)
+    def feasible_beta(self):
+        return torch.sigmoid(self.threshold)
+    
+    @property
+    def feasible_threshold(self):
+        return torch.nn.functional.softplus(self.beta)
+    
+    @property
+    def DEVICE(self):
+        return self.args.DEVICE
     
     def SpikeGenerator(self, surplus):
         # straight through estimator
@@ -494,7 +604,7 @@ class SpikingNeuron(torch.nn.Module):
     
     def StateUpdate(self, x):
         # update the state of neuron with new input
-        return self.beta * self.memory + x
+        return self.feasible_beta * self.memory + x
     
     @property
     def fire(self):
@@ -503,7 +613,7 @@ class SpikingNeuron(torch.nn.Module):
     
     def StatePostupdate(self):
         # update the state of neuron after firing
-        return self.memory - self.fire.detach() * self.threshold   
+        return self.memory - self.fire.detach() * self.threshold
 
     def SingleStepForward(self, x):
         self.memory = self.StateUpdate(x)
@@ -515,9 +625,9 @@ class SpikingNeuron(torch.nn.Module):
         N_batch, T = x.shape
         # initialize the initial memory to match the batch size
         if self.random_state:
-            self.memory = torch.rand(N_batch) * self.threshold.detach()
+            self.memory = torch.rand(N_batch).to(self.DEVICE) * self.threshold.detach()
         else:
-            self.memory = torch.zeros(N_batch)
+            self.memory = torch.zeros(N_batch).to(self.DEVICE)
         # forward
         spikes = []
         memories = [self.memory] # add initial state
@@ -529,20 +639,28 @@ class SpikingNeuron(torch.nn.Module):
         # output
         return torch.stack(spikes, dim=1), torch.stack(memories, dim=1)
     
+    def UpdateArgs(self, args):
+        self.args = args    
 
 #===============================================================================
 #========================= Spiking Neurons in a Layer ==========================
 #===============================================================================
 
 class SpikingLayer(torch.nn.Module):
-    def __init__(self, N_neuron, beta=None, threshold=None, random_state=True, spike_only=True):
+    def __init__(self, args, N_neuron, beta=None, threshold=None, random_state=True, spike_only=True):
         super().__init__()
+        self.args = args
+        
         # create a list of neurons, number of neurons is the number of channels
         self.SNNList = torch.nn.ModuleList()
         for n in range(N_neuron):
-            self.SNNList.append(SpikingNeuron(beta, threshold, random_state))
+            self.SNNList.append(SpikingNeuron(args, beta, threshold, random_state))
         # whether to output only spikes, False is geneally for visualization
         self.spike_only = spike_only
+        
+    @property
+    def DEVICE(self):
+        return self.args.DEVICE
     
     def forward(self, x):
         spikes = []
@@ -560,20 +678,28 @@ class SpikingLayer(torch.nn.Module):
     def ResetOutput(self, spike_only):
         # reset the output mode
         self.spike_only = spike_only
+        
+    def UpdateArgs(self, args):
+        self.args = args
 
 #===============================================================================
 #==================== Weighted-sum for Temporal Signal =========================
 #===============================================================================
 
 class TemporalWeightedSum(torch.nn.Module):
-    def __init__(self, N_in, N_out):
+    def __init__(self, args, N_in, N_out):
         super().__init__()
+        self.args = args
         # this paameter contrains both weights and bias
         self.weight = torch.nn.Parameter(torch.randn(N_in+1, N_out)/10.)
     
+    @property
+    def DEVICE(self):
+        return self.args.DEVICE
+    
     def forward(self, x):
         # extend the input with 1 for bias
-        x_extend = torch.cat([x, torch.ones(x.shape[0], 1, x.shape[2])], dim=1)
+        x_extend = torch.cat([x, torch.ones(x.shape[0], 1, x.shape[2]).to(self.DEVICE)], dim=1)
         # for each time step, compute the weighted sum
         T = x.shape[2]
         result = []
@@ -582,27 +708,47 @@ class TemporalWeightedSum(torch.nn.Module):
             result.append(mac)
         return torch.stack(result, dim=2)
     
+    def UpdateArgs(self, args):
+        self.args = args
+    
 #===============================================================================
 #======================== Spiking Neural Network ===============================
 #===============================================================================
 
 class SpikingNeuralNetwork(torch.nn.Module):
-    def __init__(self, topology, beta=None, threshold=None, random_state=True):
+    def __init__(self, args, topology, beta=None, threshold=None, random_state=True):
         super().__init__()
+        self.args = args
+        
+        # initialize beta
+        if beta is None:
+            beta = torch.tensor(0.95)
+        beta = torch.log(beta / (1 - beta))
+        self.beta = torch.nn.Parameter(beta, requires_grad=True)
+        
+        # initialize threshold
+        if threshold is None:
+            threshold = torch.tensor(1.)
+        self.threshold = torch.nn.Parameter(threshold, requires_grad=True)
+        
         # create snn with weighted-sum and spiking neurons
         self.model = torch.nn.Sequential()
         for i in range(len(topology)-1):
-            self.model.add_module('MAC'+str(i), TemporalWeightedSum(topology[i], topology[i+1]))
-            self.model.add_module('SNNLayer'+str(i), SpikingLayer(topology[i+1], beta, threshold, random_state))
+            self.model.add_module('MAC'+str(i), TemporalWeightedSum(args, topology[i], topology[i+1]))
+            self.model.add_module('SNNLayer'+str(i), SpikingLayer(args, topology[i+1], self.beta, self.threshold, random_state))
         self.InitOutput()
-
+    
+    @property
+    def DEVICE(self):
+        return self.args.DEVICE
+    
     def forward(self, x):
         return self.model(x)
 
     def Power(self):
         # this function is just used to match the evaluation
         # the power of snn in-silico is acutally not considered
-        return torch.zeros(1)
+        return torch.zeros(1).to(self.DEVICE)
 
     def InitOutput(self):
         for layer in self.model:
@@ -619,7 +765,22 @@ class SpikingNeuralNetwork(torch.nn.Module):
                     print(f"The memory of layer {str(Layer)} will be output.")
                 except:
                     print(f"Layer {str(Layer)} is not a spiking layer, it has no attribute 'ResetOutput'.")
-
+    
+    def UpdateArgs(self, args):
+        self.args = args
+        self.beta.args = args
+        self.threshold.args = args
+        for layer in self.model:
+            if hasattr(layer, 'UpdateArgs'):
+                layer.UpdateArgs(args)
+                
+    def GetParam(self):
+        weights = [p for name, p in self.named_parameters() if name.endswith('weight')]
+        nonlinear = [p for name, p in self.named_parameters() if name.endswith('beta') or name.endswith('threshold')]
+        if self.args.lnc:
+            return weights + nonlinear
+        else:
+            return weights
 
 #===============================================================================
 #============================= Loss Functin ====================================

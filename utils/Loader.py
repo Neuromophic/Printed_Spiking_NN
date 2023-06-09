@@ -184,9 +184,9 @@ def GetDataLoader(args, mode, path=None):
         infos = []
         for dataname in split_manufacture:
             # data
-            trainset  = dataset(dataname, args, mode='train')
-            validset  = dataset(dataname, args, mode='valid')
-            testset   = dataset(dataname, args, mode='test')
+            trainset  = dataset(dataname, args, path, mode='train')
+            validset  = dataset(dataname, args, path, mode='valid')
+            testset   = dataset(dataname, args, path, mode='test')
             # batch
             train_loaders.append(DataLoader(trainset, batch_size=len(trainset)))
             valid_loaders.append(DataLoader(validset, batch_size=len(validset)))
@@ -201,7 +201,12 @@ def GetDataLoader(args, mode, path=None):
             info['N_test']    = len(testset)
             infos.append(info)
 
-        return train_loaders, valid_loaders, test_loaders, infos
+        if mode == 'train':
+            return train_loaders, infos
+        elif mode == 'valid':
+            return valid_loaders, infos
+        elif mode == 'test':
+            return test_loaders, infos
 
     elif args.task=='temporized':
         dataname = temporized_datasets[args.DATASET]
