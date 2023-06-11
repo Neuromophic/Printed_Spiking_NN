@@ -39,7 +39,7 @@ for seed in range(50):
 
     SetSeed(args.SEED)
 
-    setup = f"baseline_model_SNN_data_{datainfo['dataname']}_seed_{args.SEED}_lnc_{args.lnc}_ilnc_False.model"
+    setup = f"baseline_model_SNN_data_{datainfo['dataname']}_seed_{args.SEED:02d}_lnc_{args.lnc}_ilnc_{args.ilnc}.model"
     print(f'Training setup: {setup}.')
 
     msglogger = GetMessageLogger(args, setup)
@@ -55,6 +55,10 @@ for seed in range(50):
         msglogger.info(f'Topology of the network: {topology}.')
 
         snn = B.SpikingNeuralNetwork(args, topology).to(args.DEVICE)
+        
+        msglogger.info(f'Number of parameters that could be learned: {len(dict(snn.named_parameters()).keys())}.')
+        msglogger.info(dict(snn.named_parameters()).keys())
+        msglogger.info(f'Number of parameters that are learned in this experiment: {len(snn.GetParam())}.')
 
         lossfunction = B.SNNLoss().to(args.DEVICE)
         optimizer = torch.optim.Adam(snn.GetParam(), lr=args.LR)

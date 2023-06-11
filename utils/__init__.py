@@ -58,5 +58,6 @@ def FormulateArgs(args):
         args.K_train = 1
     if args.InputNoise==0.:
         args.R_train = 1
+    
     return args
     

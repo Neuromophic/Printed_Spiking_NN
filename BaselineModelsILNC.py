@@ -187,23 +187,23 @@ class TanhRT(torch.nn.Module):
     def forward(self, z):
         return self.eta[0] + self.eta[1] * torch.tanh((z - self.eta[2]) * self.eta[3])
 
+# ================================================================================================================================================
+# ===============================================================  Printed Neuron  ================================================================
+# ================================================================================================================================================
 
-# ================================================================================================================================================
-# ===============================================================  Printed Layer  ================================================================
-# ================================================================================================================================================
-class pLayer(torch.nn.Module):
-    def __init__(self, n_in, n_out, args, ACT, INV):
+class pNeuron(torch.nn.Module):
+    def __init__(self, n_in, args):
         super().__init__()
         self.args = args
         # define nonlinear circuits
-        self.INV = INV
-        self.ACT = ACT
+        self.INV = InvRT(args)
+        self.ACT = TanhRT(args)
         # initialize conductances for weights
-        theta = torch.rand([n_in + 2, n_out])/100. + args.gmin
-        theta[-1, :] = theta[-1, :] + args.gmax
-        theta[-2, :] = self.ACT.eta[2].detach().item() / \
+        theta = torch.rand([n_in + 2, 1])/100. + args.gmin
+        theta[-1, 0] = theta[-1, 0] + args.gmax
+        theta[-2, 0] = self.ACT.eta[2].detach().item() / \
             (1.-self.ACT.eta[2].detach().item()) * \
-            (torch.sum(theta[:-2, :], axis=0)+theta[-1, :])
+            (torch.sum(theta[:-2, 0], axis=0)+theta[-1, 0])
         self.theta_ = torch.nn.Parameter(theta, requires_grad=True)
 
     @property
@@ -313,6 +313,44 @@ class pLayer(torch.nn.Module):
             self.INV.args = value
             self.ACT.args = value
 
+    
+# ================================================================================================================================================
+# ===============================================================  Printed Layer  ================================================================
+# ================================================================================================================================================
+
+class pLayer(torch.nn.Module):
+    def __init__(self, n_in, n_out, args):
+        super().__init__()
+        self.args = args
+
+        self.pNList = torch.nn.ModuleList()
+        for n in range(n_out):
+            self.pNList.append(pNeuron(n_in, args))
+
+    @property
+    def device(self):
+        return self.args.DEVICE
+
+    def forward(self, x):
+        y = []
+        for n in range(len(self.pNList)):
+            yn = self.pNList[n](x)
+            y.append(yn)
+        return torch.cat(y, dim=1)
+    
+    @property
+    def power(self):
+        p = torch.tensor([0.]).to(self.device)
+        for n in self.pNList:
+            p += n.power
+        return p
+
+    def SetParameter(self, name, value):
+        if name == 'args':
+            self.args = value
+            for n in self.pNlist():
+                n.SetParameter(name, value)
+
 
 # ================================================================================================================================================
 # ==============================================================  Printed Circuit  ===============================================================
@@ -323,14 +361,10 @@ class pNN(torch.nn.Module):
 
         self.args = args
 
-        # define nonlinear circuits
-        self.act = TanhRT(args)
-        self.inv = InvRT(args)
-
         self.model = torch.nn.Sequential()
         for i in range(len(topology)-1):
             self.model.add_module(
-                f'{i}-th pLayer', pLayer(topology[i], topology[i+1], args, self.act, self.inv))
+                f'{i}-th pLayer', pLayer(topology[i], topology[i+1], args))
 
     def forward(self, X):
         return self.model(X)
@@ -443,7 +477,7 @@ class CELOSS(torch.nn.Module):
 # ================================================================================================================================================
 
 class LSTMCell(torch.nn.Module):
-    def __init__(self, input_size, hidden_size, sigmoid, activation):
+    def __init__(self, input_size, hidden_size):
         super(LSTMCell, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -451,30 +485,31 @@ class LSTMCell(torch.nn.Module):
         self.i2h = torch.nn.Linear(input_size + hidden_size, 4 * hidden_size)
         self.h2h = torch.nn.Linear(hidden_size, 4 * hidden_size)
         
-        self.sigmoid = sigmoid
-        self.activation = activation
+        self.sigmoid1 = Sigmoid()
+        self.sigmoid2 = Sigmoid()
+        self.sigmoid3 = Sigmoid()
+        self.activation1 = Tanh()
+        self.activation2 = Tanh()
 
     def forward(self, input, hidden):
         hx, cx = hidden
         gates = self.i2h(torch.cat([input, hx], dim=1)) + self.h2h(hx)
         i_gate, f_gate, c_gate, o_gate = gates.chunk(4, 1)
 
-        i_gate = self.sigmoid(i_gate)
-        f_gate = self.sigmoid(f_gate)
-        c_gate = self.activation(c_gate)
-        o_gate = self.sigmoid(o_gate)
+        i_gate = self.sigmoid1(i_gate)
+        f_gate = self.sigmoid2(f_gate)
+        c_gate = self.activation1(c_gate)
+        o_gate = self.sigmoid3(o_gate)
 
         cy = (f_gate * cx) + (i_gate * c_gate)
-        hy = o_gate * self.activation(cy)
+        hy = o_gate * self.activation2(cy)
 
         return hy, cy
 
 class CustomLSTM(torch.nn.Module):
     def __init__(self, input_size, hidden_size):
         super().__init__()
-        self.activation = Tanh()
-        self.sigmoid = Sigmoid()
-        self.lstm_cell = LSTMCell(input_size, hidden_size, self.sigmoid, self.activation)
+        self.lstm_cell = LSTMCell(input_size, hidden_size)
     
     def forward(self, input_sequence, initial_states=None):
         input_sequence = input_sequence.permute(1,0,2)
@@ -533,17 +568,63 @@ class lstm(torch.nn.Module):
 # ============================================================== Multi-Layer Perception ==========================================================
 # ================================================================================================================================================
 
-class mlp(torch.nn.Module):
-    def __init__(self, args, topology):
+class mlpNeuron(torch.nn.Module):
+    def __init__(self, args, n_in):
         super().__init__()
         self.args = args
         
         self.activation = Tanh()
         
+        self.weight = torch.nn.Parameter(torch.randn(n_in, 1), requires_grad=True)
+        self.bias = torch.nn.Parameter(torch.randn(1), requires_grad=True)
+    
+    def Power(self):
+        # this function is just used to match the evaluation
+        # the power of mlp in-silico is acutally not considered
+        return torch.zeros(1)
+    
+    def forward(self, X):
+        mac = torch.matmul(X, self.weight) + self.bias
+        return self.activation(mac)
+        
+    def UpdateArgs(self, args):
+        self.args = args
+
+class mlpLayer(torch.nn.Module):
+    def __init__(self, args, n_in, n_out):
+        super().__init__()
+        self.args = args
+                
+        self.neuronlist = torch.nn.ModuleList()
+        for i in range(n_out):
+            self.neuronlist.append(mlpNeuron(args, n_in))
+    
+    def Power(self):
+        # this function is just used to match the evaluation
+        # the power of mlp in-silico is acutally not considered
+        return torch.zeros(1)
+    
+    def forward(self, X):
+        y = []
+        for n in range(len(self.neuronlist)):
+            yn = self.neuronlist[n](X)
+            y.append(yn)
+        return torch.cat(y, dim=1)
+        
+    def UpdateArgs(self, args):
+        self.args = args
+        for n in self.neuronlist:
+            layer.UpdateArgs(args)
+                
+
+class mlp(torch.nn.Module):
+    def __init__(self, args, topology):
+        super().__init__()
+        self.args = args
+        
         self.model = torch.nn.Sequential()
         for i in range(len(topology)-1):
-            self.model.add_module(f'{i}-th pLayer', torch.nn.Linear(topology[i], topology[i+1]))
-            self.model.add_module(f'{i}-th activation', self.activation)
+            self.model.add_module(f'{i}-th pLayer', mlpLayer(args, topology[i], topology[i+1]))
     
     def Power(self):
         # this function is just used to match the evaluation
@@ -569,43 +650,6 @@ class mlp(torch.nn.Module):
     
 
 #===============================================================================
-#==================== Learnable decay and threshold for SNN ====================
-#===============================================================================
-
-class VoltageDecay(torch.nn.Module):
-    def __init__(self, args, beta=None):
-        super().__init__()
-        self.args = args
-        if beta is None:
-            beta = torch.tensor(0.95)
-        beta_ = torch.log(beta / (1 - beta))
-        self.beta = torch.nn.Parameter(beta_, requires_grad=True).to(self.DEVICE)
-    
-    @property
-    def DEVICE(self):
-        return self.args.DEVICE
-    
-    def forward(self):
-        self.beta.retain_grad()
-        return torch.sigmoid(self.beta)
-
-class VoltageThreshold(torch.nn.Module):
-    def __init__(self, args, threshold=None):
-        super().__init__()
-        self.args = args
-        if threshold is None:
-            threshold = torch.tensor(1.)
-        self.threshold = torch.nn.Parameter(threshold, requires_grad=True).to(self.DEVICE)
-    
-    @property
-    def DEVICE(self):
-        return self.args.DEVICE
-    
-    def forward(self):
-        self.threshold.retain_grad()
-        return torch.nn.functional.softplus(self.threshold)
-
-#===============================================================================
 #============================ Single Spiking Neuron ============================
 #===============================================================================
     
@@ -613,8 +657,8 @@ class SpikingNeuron(torch.nn.Module):
     def __init__(self, args, beta=None, threshold=None, random_state=True):
         super().__init__()
         self.args = args
-        self.beta = beta
-        self.threshold = threshold
+        self.beta = torch.nn.Parameter(beta, requires_grad=True)
+        self.threshold = torch.nn.Parameter(threshold, requires_grad=True)
 
         # whether to initialize the initial state randomly for simulating unknown previous state
         # this is especially useful for signals split by sliding windows
@@ -622,7 +666,7 @@ class SpikingNeuron(torch.nn.Module):
     
     @property
     def feasible_beta(self):
-        return torch.simoid(self.threshold)
+        return torch.sigmoid(self.threshold)
     
     @property
     def feasible_threshold(self):
@@ -663,7 +707,7 @@ class SpikingNeuron(torch.nn.Module):
         N_batch, T = x.shape
         # initialize the initial memory to match the batch size
         if self.random_state:
-            self.memory = torch.rand(N_batch).to(self.DEVICE) * self.threshold().detach()
+            self.memory = torch.rand(N_batch).to(self.DEVICE) * self.threshold.detach()
         else:
             self.memory = torch.zeros(N_batch).to(self.DEVICE)
         # forward
@@ -762,18 +806,16 @@ class SpikingNeuralNetwork(torch.nn.Module):
         if beta is None:
             beta = torch.tensor(0.95)
         beta = torch.log(beta / (1 - beta))
-        self.beta = torch.nn.Parameter(beta, requires_grad=True)
         
         # initialize threshold
         if threshold is None:
             threshold = torch.tensor(1.)
-        self.threshold = torch.nn.Parameter(threshold, requires_grad=True)
         
         # create snn with weighted-sum and spiking neurons
         self.model = torch.nn.Sequential()
         for i in range(len(topology)-1):
             self.model.add_module('MAC'+str(i), TemporalWeightedSum(args, topology[i], topology[i+1]))
-            self.model.add_module('SNNLayer'+str(i), SpikingLayer(args, topology[i+1], self.beta, self.threshold, random_state))
+            self.model.add_module('SNNLayer'+str(i), SpikingLayer(args, topology[i+1], beta, threshold, random_state))
         self.InitOutput()
     
     @property

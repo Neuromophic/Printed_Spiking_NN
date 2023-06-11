@@ -39,7 +39,7 @@ for seed in range(50):
 
     SetSeed(args.SEED)
 
-    setup = f"baseline_model_LSTM_data_{datainfo['dataname']}_seed_{args.SEED}_lnc_{args.lnc}_ilnc_False.model"
+    setup = f"baseline_model_LSTM_data_{datainfo['dataname']}_seed_{args.SEED:02d}_lnc_{args.lnc}_ilnc_{args.ilnc}.model"
     print(f'Training setup: {setup}.')
 
     msglogger = GetMessageLogger(args, setup)
@@ -52,7 +52,11 @@ for seed in range(50):
         msglogger.info('Training was already finished.')
     else:
         lstm = B.lstm(args, datainfo['N_feature'], datainfo['N_class']).to(args.DEVICE)
-
+        
+        msglogger.info(f'Number of parameters that could be learned: {len(dict(lstm.named_parameters()).keys())}.')
+        msglogger.info(dict(lstm.named_parameters()).keys())
+        msglogger.info(f'Number of parameters that are learned in this experiment: {len(lstm.GetParam())}.')
+        
         lossfunction = B.CELOSS().to(args.DEVICE)
         optimizer = torch.optim.Adam(lstm.GetParam(), lr=args.LR)
 

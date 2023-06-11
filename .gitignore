@@ -8,3 +8,4 @@ pNN_data*
 result_data*
 .vscode
 *.mlp
+*.model
