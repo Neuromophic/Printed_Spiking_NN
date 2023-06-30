@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#SBATCH --job-name=BSL
+#SBATCH --job-name=SNN
 #SBATCH --error=%x.%j.err
 #SBATCH --output=%x.%j.out
 #SBATCH --mail-user=hzhao@teco.edu
@@ -24,7 +24,7 @@ if args.ilnc:
 else:
     import BaselineModels as B
 
-for seed in range(50):
+for seed in range(10):
 
     args.SEED = seed
     args = FormulateArgs(args)

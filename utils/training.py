@@ -93,7 +93,8 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
         current_epoch, nn, optimizer, best_valid_loss = load_checkpoint(UUID, args.temppath)
         for g in optimizer.param_groups:
             current_lr = g['lr']
-            g['params'] = [p for p in nn.parameters()]
+            # g['params'] = [p for p in nn.parameters()]
+            g['params'] = nn.GetParam()
         logger.info(f'Restart previous training from {current_epoch} epoch with lr: {current_lr}.')
         print(f'Restart previous training from {current_epoch} epoch with lr: {current_lr}.')
     else:
@@ -106,6 +107,8 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
         msg = ''
         
         for x_train, y_train in train_loader:
+            for g in optimizer.param_groups:
+                print(len(g['params']))
             msg += f'{current_lr}'
             msg += f'hyperparameters in printed neural network for training :\nepoch : {epoch:-6d} |\n'
             
@@ -144,7 +147,8 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
             _, nn, _,_ = load_checkpoint(UUID, args.temppath)
             logger.info('load best network to warm start training with lower lr.')
             for g in optimizer.param_groups:
-                g['params'] = [p for p in nn.parameters()]
+                # g['params'] = [p for p in nn.parameters()]
+                g['params'] = nn.GetParam()
                 g['lr'] = g['lr'] * args.LR_DECAY
                 current_lr = g['lr']
             logger.info(f'lr update to {current_lr}.')

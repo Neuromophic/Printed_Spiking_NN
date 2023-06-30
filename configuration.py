@@ -50,8 +50,9 @@ parser.add_argument('--PROGRESSIVE',           type=bool,      default=True,    
 parser.add_argument('--LR_PATIENCE',           type=int,       default=100,                   help='patience for updating learning rate')
 parser.add_argument('--LR_DECAY',              type=float,     default=0.5,                   help='decay of learning rate for progressive lr')
 parser.add_argument('--LR_MIN',                type=float,     default=1e-4,                  help='minimal learning rate for stop training')
-# metrics
+# evaluation
 parser.add_argument('--metric',                type=str,       default='acc',                 help='nominal accuracy or measuring-aware accuracy')
+parser.add_argument('--SoftEva',               type=bool,      default=False,                 help='if True, evaluate only existing models, otherwise check all models')
 # server-related
 parser.add_argument('--TIMELIMITATION',        type=float,     default=45,                    help='maximal running time (in hour)')
 

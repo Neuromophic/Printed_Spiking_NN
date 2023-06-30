@@ -6,7 +6,7 @@ sbatch exp_baseline_LSTM.py --DATASET 4 --task temporized --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 5 --task temporized --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 6 --task temporized --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 7 --task temporized --projectname Baseline
-sbatch exp_baseline_LSTM.py --DATASET 8 --task temporized --projectname Baseline
+sbatch exp_baseline_LSTM.py --DATASET 8 --task temporized --DEVICE cpu --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 9 --task temporized --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 10 --task temporized --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 11 --task temporized --projectname Baseline
@@ -19,7 +19,7 @@ sbatch exp_baseline_LSTM.py --DATASET 4 --task temporized --lnc True --projectna
 sbatch exp_baseline_LSTM.py --DATASET 5 --task temporized --lnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 6 --task temporized --lnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 7 --task temporized --lnc True --projectname Baseline
-sbatch exp_baseline_LSTM.py --DATASET 8 --task temporized --lnc True --projectname Baseline
+sbatch exp_baseline_LSTM.py --DATASET 8 --task temporized --lnc True --DEVICE cpu --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 9 --task temporized --lnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 10 --task temporized --lnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 11 --task temporized --lnc True --projectname Baseline
@@ -32,7 +32,7 @@ sbatch exp_baseline_LSTM.py --DATASET 4 --task temporized --lnc True --ilnc True
 sbatch exp_baseline_LSTM.py --DATASET 5 --task temporized --lnc True --ilnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 6 --task temporized --lnc True --ilnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 7 --task temporized --lnc True --ilnc True --projectname Baseline
-sbatch exp_baseline_LSTM.py --DATASET 8 --task temporized --lnc True --ilnc True --projectname Baseline
+sbatch exp_baseline_LSTM.py --DATASET 8 --task temporized --lnc True --ilnc True --DEVICE cpu --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 9 --task temporized --lnc True --ilnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 10 --task temporized --lnc True --ilnc True --projectname Baseline
 sbatch exp_baseline_LSTM.py --DATASET 11 --task temporized --lnc True --ilnc True --projectname Baseline

@@ -307,11 +307,10 @@ class pNeuron(torch.nn.Module):
     def WeightDecay(self):
         return self.theta.pow(2.).mean()
 
-    def SetParameter(self, name, value):
-        if name == 'args':
-            self.args = value
-            self.INV.args = value
-            self.ACT.args = value
+    def UpdateArgs(self, args):
+        self.args = args
+        self.INV.args = args
+        self.ACT.args = args
 
     
 # ================================================================================================================================================
@@ -345,11 +344,11 @@ class pLayer(torch.nn.Module):
             p += n.power
         return p
 
-    def SetParameter(self, name, value):
-        if name == 'args':
-            self.args = value
-            for n in self.pNlist():
-                n.SetParameter(name, value)
+    def UpdateArgs(self, args):
+        self.args = args
+        for neuron in self.pNList:
+            if hasattr(neuron, 'UpdateArgs'):
+                neuron.UpdateArgs(args)
 
 
 # ================================================================================================================================================
@@ -394,12 +393,11 @@ class pNN(torch.nn.Module):
         else:
             return weights
 
-    def SetParameter(self, name, value):
-        if name == 'args':
-            self.args = value
-            for m in self.model:
-                m.SetParameter('args', self.args)
-
+    def UpdateArgs(self, args):
+        self.args = args
+        for layer in self.model:
+            if hasattr(layer, 'UpdateArgs'):
+                layer.UpdateArgs(args)
 
 # ================================================================================================================================================
 # =============================================================  pNN Loss function  ==============================================================
@@ -559,9 +557,6 @@ class lstm(torch.nn.Module):
         
     def UpdateArgs(self, args):
         self.args = args
-        for layer in self.model:
-            if hasattr(layer, 'UpdateArgs'):
-                layer.UpdateArgs(args)
 
 
 # ================================================================================================================================================
@@ -613,8 +608,8 @@ class mlpLayer(torch.nn.Module):
         
     def UpdateArgs(self, args):
         self.args = args
-        for n in self.neuronlist:
-            layer.UpdateArgs(args)
+        for neuron in self.neuronlist:
+            neuron.UpdateArgs(args)
                 
 
 class mlp(torch.nn.Module):
@@ -666,11 +661,11 @@ class SpikingNeuron(torch.nn.Module):
     
     @property
     def feasible_beta(self):
-        return torch.sigmoid(self.threshold)
+        return torch.sigmoid(self.beta)
     
     @property
     def feasible_threshold(self):
-        return torch.nn.functional.softplus(self.beta)
+        return torch.nn.functional.softplus(self.threshold)
     
     @property
     def DEVICE(self):
@@ -763,7 +758,10 @@ class SpikingLayer(torch.nn.Module):
         
     def UpdateArgs(self, args):
         self.args = args
-
+        for neuron in self.SNNList:
+            if hasattr(neuron, 'UpdateArgs'):
+                neuron.UpdateArgs(args)
+                
 #===============================================================================
 #==================== Weighted-sum for Temporal Signal =========================
 #===============================================================================
@@ -848,8 +846,6 @@ class SpikingNeuralNetwork(torch.nn.Module):
     
     def UpdateArgs(self, args):
         self.args = args
-        self.beta.args = args
-        self.threshold.args = args
         for layer in self.model:
             if hasattr(layer, 'UpdateArgs'):
                 layer.UpdateArgs(args)

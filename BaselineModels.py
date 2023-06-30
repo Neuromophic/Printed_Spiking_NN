@@ -307,11 +307,8 @@ class pLayer(torch.nn.Module):
     def WeightDecay(self):
         return self.theta.pow(2.).mean()
 
-    def SetParameter(self, name, value):
-        if name == 'args':
-            self.args = value
-            self.INV.args = value
-            self.ACT.args = value
+    def UpdateArgs(self, args):
+        self.args = args
 
 
 # ================================================================================================================================================
@@ -360,11 +357,13 @@ class pNN(torch.nn.Module):
         else:
             return weights
 
-    def SetParameter(self, name, value):
-        if name == 'args':
-            self.args = value
-            for m in self.model:
-                m.SetParameter('args', self.args)
+    def UpdateArgs(self, args):
+        self.args = args
+        self.act.args = args
+        self.inv.args = args
+        for layer in self.model:
+            if hasattr(layer, 'UpdateArgs'):
+                layer.UpdateArgs(args)
 
 
 # ================================================================================================================================================
@@ -524,9 +523,6 @@ class lstm(torch.nn.Module):
         
     def UpdateArgs(self, args):
         self.args = args
-        for layer in self.model:
-            if hasattr(layer, 'UpdateArgs'):
-                layer.UpdateArgs(args)
 
 
 # ================================================================================================================================================
@@ -584,11 +580,11 @@ class SpikingNeuron(torch.nn.Module):
     
     @property
     def feasible_beta(self):
-        return torch.sigmoid(self.threshold)
+        return torch.sigmoid(self.beta)
     
     @property
     def feasible_threshold(self):
-        return torch.nn.functional.softplus(self.beta)
+        return torch.nn.functional.softplus(self.threshold)
     
     @property
     def DEVICE(self):
@@ -681,6 +677,9 @@ class SpikingLayer(torch.nn.Module):
         
     def UpdateArgs(self, args):
         self.args = args
+        for neuron in self.SNNList:
+            if hasattr(neuron, 'UpdateArgs'):
+                neuron.UpdateArgs(args)
 
 #===============================================================================
 #==================== Weighted-sum for Temporal Signal =========================
