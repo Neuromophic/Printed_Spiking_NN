@@ -18,7 +18,7 @@ import pickle
 import numpy as np
 import training
 import config
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import MyTransformer
 
 models = ['gpt-nano', 'gpt-micro', 'gpt-mini', 'gopher-44m', 'gpt2']
@@ -29,7 +29,7 @@ model_idx = int(sys.argv[2])
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 for lr in range(-3,-6,-1):
-    
+
     exp_setup = f'{models[model_idx]}_lr_{lr}_seed_{seed}'
     print(f'The experiment setup is {exp_setup}.')
 
@@ -66,8 +66,8 @@ for lr in range(-3,-6,-1):
         model, train_loss, valid_loss = training.train_nn(model, train_loader, valid_loader, lossfunction, optimizer, UUID=exp_setup)
         torch.save(model, f'./NNs/predictor_{exp_setup}')
         
-        plt.figure()
-        plt.plot(train_loss, label='train')
-        plt.plot(valid_loss, label='valid')
-        plt.savefig(f'./NNs/train_curve_{exp_setup}.pdf', format='pdf', bbox_inches='tight')
-        plt.close()
+        # plt.figure()
+        # plt.plot(train_loss, label='train')
+        # plt.plot(valid_loss, label='valid')
+        # plt.savefig(f'./NNs/train_curve_{exp_setup}.pdf', format='pdf', bbox_inches='tight')
+        # plt.close()
