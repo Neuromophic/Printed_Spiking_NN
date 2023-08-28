@@ -21,14 +21,24 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
     patience = 0
 
     for epoch in range(10**10):
+        total_loss = 0.0  # Accumulator for the sum of losses
+        total_samples = 0  # Accumulator for the total number of samples
         for x_train, y_train in train_loader:
             prediction_train = nn(x_train)
             L_train = lossfunction(prediction_train, y_train)
-            train_loss.append(L_train.item())
+            
+            # Update the total loss and total number of samples
+            total_loss += L_train.item() * x_train.size(0)
+            total_samples += x_train.size(0)
             
             optimizer.zero_grad()
             L_train.backward()
             optimizer.step()
+
+        # Calculate the weighted mean loss
+        weighted_mean_loss = total_loss / total_samples
+        train_loss.append(weighted_mean_loss)
+            
             
         with torch.no_grad():
             for x_valid, y_valid in valid_loader:
@@ -43,12 +53,12 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
         else:
             patience += 1
 
-        if patience > 10000:
+        if patience > 2500:
             print('Early stop.')
             break
 
-        if not epoch % 500:
-            print(f'| Epoch: {epoch:-8d} | Train loss: {L_train.item():.5f} | Valid loss: {L_valid.item():.5f} |')
+        # if not epoch % 500:
+        print(f'| Epoch: {epoch:-8d} | Train loss: {L_train.item():.5f} | Valid loss: {L_valid.item():.5f} | Patience: {patience} |')
     
     # remove temp files
     resulted_nn = torch.load(f'./temp/NN_{UUID}_{training_ID}')
