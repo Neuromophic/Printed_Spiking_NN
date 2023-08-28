@@ -28,7 +28,7 @@ model_idx = int(sys.argv[2])
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-for lr in range(-1,-6,-1):
+for lr in range(-2,-5,-1):
 
     exp_setup = f'{models[model_idx]}_lr_{lr}_seed_{seed}'
     print(f'The experiment setup is {exp_setup}.')
