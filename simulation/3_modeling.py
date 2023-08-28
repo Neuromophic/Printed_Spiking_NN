@@ -56,7 +56,7 @@ for lr in range(-2,-5,-1):
         config.SetSeed(seed)
 
         model_config = MyTransformer.GPT.get_default_config()
-        model_config.model_type = 'gpt-nano'
+        model_config.model_type = models[model_idx]
         model_config.block_size = X_train.shape[1]
         model = MyTransformer.GPT(model_config)
 
