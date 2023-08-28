@@ -48,7 +48,8 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
 
         if L_valid.item() < best_valid_loss:
             best_valid_loss = L_valid.item()
-            torch.save(nn, f'./temp/NN_{UUID}_{training_ID}')
+            scripted_model = torch.jit.script(nn)
+            scripted_model.save(f'./temp/NN_{UUID}_{training_ID}.pt')
             patience = 0
         else:
             patience += 1
@@ -61,8 +62,8 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
         print(f'| Epoch: {epoch:-8d} | Train loss: {L_train.item():.5f} | Valid loss: {L_valid.item():.5f} | Patience: {patience} |')
     
     # remove temp files
-    resulted_nn = torch.load(f'./temp/NN_{UUID}_{training_ID}')
-    os.remove(f'./temp/NN_{UUID}_{training_ID}')
+    resulted_nn = torch.jit.load(f'./temp/NN_{UUID}_{training_ID}.pt')
+    os.remove(f'./temp/NN_{UUID}_{training_ID}.pt')
     
     print('Finished.')
     return resulted_nn, train_loss, valid_loss
