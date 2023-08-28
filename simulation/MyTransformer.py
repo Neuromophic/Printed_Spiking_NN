@@ -66,14 +66,20 @@ class Block(nn.Module):
             act=GELU(),
             dropout=nn.Dropout(config.resid_pdrop),
         ))
+    
+    def mlp_forward(self, x):
         m = self.mlp
-        self.mlpf = lambda x: m.dropout(
-            m.c_proj(m.act(m.c_fc(x))))  # MLP forward
+        x = m.c_fc(x)
+        x = m.act(x)
+        x = m.c_proj(x)
+        x = m.dropout(x)
+        return x
 
     def forward(self, x):
         x = x + self.attn(self.ln_1(x))
-        x = x + self.mlpf(self.ln_2(x))
+        x = x + self.mlp_forward(self.ln_2(x))
         return x
+
 
 
 class CfgNode:

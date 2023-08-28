@@ -64,8 +64,8 @@ for lr in range(-3,-6,-1):
         optimizer = torch.optim.Adam(model.parameters(), lr=10**lr)
 
         model, train_loss, valid_loss = training.train_nn(model, train_loader, valid_loader, lossfunction, optimizer, UUID=exp_setup)
-        scripted_model = torch.jit.script(model)
-        scripted_model.save(f'./NNs/predictor_{exp_setup}.pt')
+        torch.save(model, f'./NNs/predictor_{exp_setup}')
+        
         # plt.figure()
         # plt.plot(train_loss, label='train')
         # plt.plot(valid_loss, label='valid')
