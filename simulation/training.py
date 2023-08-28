@@ -21,6 +21,7 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
     patience = 0
 
     for epoch in range(10**10):
+        time_start = time.time()
         total_loss = 0.0  # Accumulator for the sum of losses
         total_samples = 0  # Accumulator for the total number of samples
         for x_train, y_train in train_loader:
@@ -53,12 +54,13 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
         else:
             patience += 1
 
-        if patience > 2500:
+        if patience > 100:
             print('Early stop.')
             break
 
         # if not epoch % 500:
-        print(f'| Epoch: {epoch:-8d} | Train loss: {L_train.item():.5f} | Valid loss: {L_valid.item():.5f} | Patience: {patience} |')
+        time_end = time.time()
+        print(f'| Epoch: {epoch:-8d} | Train loss: {L_train.item():.5f} | Valid loss: {L_valid.item():.5f} | Patience: {patience} | Epoch Time: {time_end-time_start:.2f} |')
     
     # remove temp files
     resulted_nn = torch.load(f'./temp/NN_{UUID}_{training_ID}')
