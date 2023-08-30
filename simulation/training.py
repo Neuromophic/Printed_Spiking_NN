@@ -41,11 +41,24 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
         train_loss.append(weighted_mean_loss)
             
             
+        total_valid_loss = 0.0
+        total_valid_samples = 0
+
+        # Validation part
+        nn.eval()  # Set the model to evaluation mode
         with torch.no_grad():
             for x_valid, y_valid in valid_loader:
                 prediction_valid = nn(x_valid)
                 L_valid = lossfunction(prediction_valid, y_valid)
-                valid_loss.append(L_valid.item())
+
+                # Update the total loss and total number of samples for validation
+                total_valid_loss += L_valid.item() * x_valid.size(0)
+                total_valid_samples += x_valid.size(0)
+
+        # Calculate the weighted mean loss for validation
+        weighted_mean_valid_loss = total_valid_loss / total_valid_samples
+        valid_loss.append(weighted_mean_valid_loss)
+
 
         if L_valid.item() < best_valid_loss:
             best_valid_loss = L_valid.item()
