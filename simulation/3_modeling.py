@@ -66,8 +66,8 @@ for lr in range(-2,-5,-1):
         model, train_loss, valid_loss = training.train_nn(model, train_loader, valid_loader, lossfunction, optimizer, UUID=exp_setup)
         torch.save(model, f'./NNs/predictor_{exp_setup}')
         
-        # plt.figure()
-        # plt.plot(train_loss, label='train')
-        # plt.plot(valid_loss, label='valid')
-        # plt.savefig(f'./NNs/train_curve_{exp_setup}.pdf', format='pdf', bbox_inches='tight')
-        # plt.close()
+        plt.figure()
+        plt.plot(train_loss, label='train')
+        plt.plot(valid_loss, label='valid')
+        plt.savefig(f'./NNs/train_curve_{exp_setup}.pdf', format='pdf', bbox_inches='tight')
+        plt.close()
