@@ -35,7 +35,7 @@ parser.add_argument('--IN_test',               type=float,     default=0.,      
 parser.add_argument('--R_train',               type=int,       default=1,                     help='number of sampling for input noise in training')
 parser.add_argument('--R_test',                type=int,       default=1,                     help='number of sampling for input noise in testing')
 # temporal information processing
-parser.add_argument('--N_time',                type=int,       default=32,                    help='number of sampling for temporal information processing')
+parser.add_argument('--N_time',                type=int,       default=300,                   help='number of sampling for temporal information processing')
 # regularization
 parser.add_argument('--pathnorm',              type=bool,      default=False,                 help='path-norm as regularization for improving robustness against input noise')
 # network-related
@@ -51,7 +51,8 @@ parser.add_argument('--LR_PATIENCE',           type=int,       default=100,     
 parser.add_argument('--LR_DECAY',              type=float,     default=0.5,                   help='decay of learning rate for progressive lr')
 parser.add_argument('--LR_MIN',                type=float,     default=1e-4,                  help='minimal learning rate for stop training')
 # evaluation
-parser.add_argument('--metric',                type=str,       default='acc',                 help='nominal accuracy or measuring-aware accuracy')
+parser.add_argument('--loss',                  type=str,       default='celoss',              help='loss function')
+parser.add_argument('--metric',                type=str,       default='temporal_acc',        help='nominal accuracy or measuring-aware accuracy')
 parser.add_argument('--SoftEva',               type=bool,      default=False,                 help='if True, evaluate only existing models, otherwise check all models')
 # server-related
 parser.add_argument('--TIMELIMITATION',        type=float,     default=45,                    help='maximal running time (in hour)')

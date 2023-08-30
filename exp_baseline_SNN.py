@@ -1,34 +1,31 @@
 #!/usr/bin/env python
-#SBATCH --job-name=SNN
-#SBATCH --error=%x.%j.err
-#SBATCH --output=%x.%j.out
-#SBATCH --mail-user=hzhao@teco.edu
-#SBATCH --export=ALL
-#SBATCH --time=48:00:00
-#SBATCH --partition=sdil
-#SBATCH --gres=gpu:1
+# SBATCH --job-name=SNN
+# SBATCH --error=%x.%j.err
+# SBATCH --output=%x.%j.out
+# SBATCH --mail-user=hzhao@teco.edu
+# SBATCH --export=ALL
+# SBATCH --time=48:00:00
+# SBATCH --partition=sdil
+# SBATCH --gres=gpu:1
 
 import os
 import sys
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), 'utils'))
-from configuration import *
-import torch
-import pprint
 from utils import *
+import PrintedSpikingNN as pSNN
+import pprint
+import torch
+from configuration import *
+
 
 args = parser.parse_args()
-
-if args.ilnc:
-    import BaselineModelsILNC as B
-else:
-    import BaselineModels as B
 
 for seed in range(10):
 
     args.SEED = seed
     args = FormulateArgs(args)
-    
+
     print(f'Training network on device: {args.DEVICE}.')
     MakeFolder(args)
 
@@ -39,7 +36,7 @@ for seed in range(10):
 
     SetSeed(args.SEED)
 
-    setup = f"baseline_model_SNN_data_{datainfo['dataname']}_seed_{args.SEED:02d}_lnc_{args.lnc}_ilnc_{args.ilnc}.model"
+    setup = f"model_pSNN_data_{datainfo['dataname']}_seed_{args.SEED:02d}.model"
     print(f'Training setup: {setup}.')
 
     msglogger = GetMessageLogger(args, setup)
@@ -51,27 +48,26 @@ for seed in range(10):
         print(f'{setup} exists, skip this training.')
         msglogger.info('Training was already finished.')
     else:
-        topology = [datainfo['N_feature']] + args.hidden + [datainfo['N_class']]
+        topology = [datainfo['N_feature']] + \
+            args.hidden + [datainfo['N_class']]
         msglogger.info(f'Topology of the network: {topology}.')
 
-        snn = B.SpikingNeuralNetwork(args, topology).to(args.DEVICE)
-        
-        msglogger.info(f'Number of parameters that could be learned: {len(dict(snn.named_parameters()).keys())}.')
-        msglogger.info(dict(snn.named_parameters()).keys())
-        msglogger.info(f'Number of parameters that are learned in this experiment: {len(snn.GetParam())}.')
+        psnn = pSNN.PrintedSpikingNeuralNetwork(topology, args).to(args.DEVICE)
 
-        lossfunction = B.SNNLoss().to(args.DEVICE)
-        optimizer = torch.optim.Adam(snn.GetParam(), lr=args.LR)
+        lossfunction = pSNN.LFLoss(args).to(args.DEVICE)
+        optimizer = torch.optim.Adam(psnn.GetParam(), lr=args.LR)
 
         if args.PROGRESSIVE:
-            snn, best = train_pnn_progressive(snn, train_loader, valid_loader, lossfunction, optimizer, args, msglogger, UUID=setup)
+            psnn, best = train_pnn_progressive(
+                psnn, train_loader, valid_loader, lossfunction, optimizer, args, msglogger, UUID=setup)
         else:
-            snn, best = train_pnn(snn, train_loader, valid_loader, lossfunction, optimizer, args, msglogger, UUID=setup)
+            psnn, best = train_pnn(psnn, train_loader, valid_loader,
+                                   lossfunction, optimizer, args, msglogger, UUID=setup)
 
         if best:
             if not os.path.exists(f'{args.savepath}/'):
                 os.makedirs(f'{args.savepath}/')
-            torch.save(snn, f'{args.savepath}/{setup}')
+            torch.save(psnn, f'{args.savepath}/{setup}')
             msglogger.info('Training if finished.')
         else:
             msglogger.warning('Time out, further training is necessary.')

@@ -107,8 +107,6 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
         msg = ''
         
         for x_train, y_train in train_loader:
-            for g in optimizer.param_groups:
-                print(len(g['params']))
             msg += f'{current_lr}'
             msg += f'hyperparameters in printed neural network for training :\nepoch : {epoch:-6d} |\n'
             
