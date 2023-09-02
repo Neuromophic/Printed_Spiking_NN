@@ -25,7 +25,6 @@ models = ['gpt-nano', 'gpt-micro', 'gpt-mini', 'gopher-44m', 'gpt2']
 
 seed  = int(sys.argv[1])
 model_idx = int(sys.argv[2])
-bs = int(sys.argv[3])
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -50,9 +49,9 @@ for lr in range(-2,-5,-1):
         valid_data = TensorDataset(X_valid, Y_valid)
         test_data  = TensorDataset(X_test, Y_test)
 
-        train_loader = DataLoader(train_data, batch_size=bs)
-        valid_loader = DataLoader(valid_data, batch_size=bs)
-        test_loader  = DataLoader(test_data, batch_size=bs)
+        train_loader = DataLoader(train_data, batch_size=128)
+        valid_loader = DataLoader(valid_data, batch_size=128)
+        test_loader  = DataLoader(test_data, batch_size=128)
 
         config.SetSeed(seed)
 
