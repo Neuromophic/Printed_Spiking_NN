@@ -38,13 +38,3 @@ sbatch 3_modeling.py 6 3
 sbatch 3_modeling.py 7 3
 sbatch 3_modeling.py 8 3
 sbatch 3_modeling.py 9 3
-sbatch 3_modeling.py 0 4
-sbatch 3_modeling.py 1 4
-sbatch 3_modeling.py 2 4
-sbatch 3_modeling.py 3 4
-sbatch 3_modeling.py 4 4
-sbatch 3_modeling.py 5 4
-sbatch 3_modeling.py 6 4
-sbatch 3_modeling.py 7 4
-sbatch 3_modeling.py 8 4
-sbatch 3_modeling.py 9 4
