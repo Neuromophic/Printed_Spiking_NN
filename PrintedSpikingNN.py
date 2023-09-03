@@ -247,4 +247,4 @@ class LFLoss(torch.nn.Module):
         L = []
         for step in range(prediction.shape[2]):
             L.append(self.loss_fn(prediction[:, :, step], label))
-        return torch.stack(L).mean()
+        return torch.stack(L).mean() + 0.1 * model.power

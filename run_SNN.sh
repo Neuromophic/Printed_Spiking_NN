@@ -1,0 +1,13 @@
+sbatch exp_SNN.py --DATASET 0 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 1 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 2 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 3 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 4 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 5 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 6 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 7 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 8 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 9 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 10 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 11 --metric nominal_snn --projectname SNN
+sbatch exp_SNN.py --DATASET 12 --metric nominal_snn --projectname SNN

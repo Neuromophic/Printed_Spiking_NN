@@ -55,17 +55,17 @@ class dataset(Dataset):
     @property
     def noisy_X_train(self):
         noise = torch.randn(self.X_train.shape) * self.args.InputNoise + 1.
-        return self.X_train * noise.to(self.args.DEVICE)
+        return self.X_train * noise.to(self.args.DEVICE) * 2.
 
     @property
     def noisy_X_valid(self):
         noise = torch.randn(self.X_valid.shape) * self.args.InputNoise +1.
-        return self.X_valid * noise.to(self.args.DEVICE)
+        return self.X_valid * noise.to(self.args.DEVICE) * 2.
     
     @property
     def noisy_X_test(self):
         noise = torch.randn(self.X_test.shape) * self.args.IN_test + 1.
-        return self.X_test * noise.to(self.args.DEVICE)
+        return self.X_test * noise.to(self.args.DEVICE) * 2.
     
     
     def __getitem__(self, index):

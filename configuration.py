@@ -35,7 +35,7 @@ parser.add_argument('--IN_test',               type=float,     default=0.,      
 parser.add_argument('--R_train',               type=int,       default=1,                     help='number of sampling for input noise in training')
 parser.add_argument('--R_test',                type=int,       default=1,                     help='number of sampling for input noise in testing')
 # temporal information processing
-parser.add_argument('--N_time',                type=int,       default=300,                   help='number of sampling for temporal information processing')
+parser.add_argument('--N_time',                type=int,       default=100,                   help='number of sampling for temporal information processing')
 # regularization
 parser.add_argument('--pathnorm',              type=bool,      default=False,                 help='path-norm as regularization for improving robustness against input noise')
 # network-related
@@ -85,7 +85,8 @@ parser.add_argument('--ilnc',                  type=bool,      default=False,   
 parser.add_argument('--projectname',           type=str,       default='project',             help='name of the project')
 parser.add_argument('--temppath',              type=str,       default='/temp',               help='path to temp files')
 parser.add_argument('--logfilepath',           type=str,       default='/log',                help='path to log files')
+parser.add_argument('--report_freq',           type=int,       default=10,                    help='write log in every N epochs')
 parser.add_argument('--recording',             type=bool,      default=False,                 help='save information in each epoch')
-parser.add_argument('--recordpath',           type=str,       default='/record',              help='save information in each epoch')
+parser.add_argument('--recordpath',            type=str,       default='/record',              help='save information in each epoch')
 parser.add_argument('--savepath',              type=str,       default='/experiment',         help='save information in each epoch')
 parser.add_argument('--loglevel',              type=str,       default='info',                help='level of message logger')

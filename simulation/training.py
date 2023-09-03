@@ -22,13 +22,13 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
 
     for epoch in range(10**10):
         time_start = time.time()
-        total_loss = 0.0  # Accumulator for the sum of losses
-        total_samples = 0  # Accumulator for the total number of samples
+        
+        total_loss = 0.0
+        total_samples = 0
         for x_train, y_train in train_loader:
             prediction_train = nn(x_train)
             L_train = lossfunction(prediction_train, y_train)
             
-            # Update the total loss and total number of samples
             total_loss += L_train.item() * x_train.size(0)
             total_samples += x_train.size(0)
             
@@ -36,26 +36,19 @@ def train_nn(nn, train_loader, valid_loader, lossfunction, optimizer, UUID='defa
             L_train.backward()
             optimizer.step()
 
-        # Calculate the weighted mean loss
         weighted_mean_loss = total_loss / total_samples
         train_loss.append(weighted_mean_loss)
             
-            
+        # Validation part    
         total_valid_loss = 0.0
         total_valid_samples = 0
-
-        # Validation part
         nn.eval()  # Set the model to evaluation mode
         with torch.no_grad():
             for x_valid, y_valid in valid_loader:
                 prediction_valid = nn(x_valid)
                 L_valid = lossfunction(prediction_valid, y_valid)
-
-                # Update the total loss and total number of samples for validation
                 total_valid_loss += L_valid.item() * x_valid.size(0)
                 total_valid_samples += x_valid.size(0)
-
-        # Calculate the weighted mean loss for validation
         weighted_mean_valid_loss = total_valid_loss / total_valid_samples
         valid_loss.append(weighted_mean_valid_loss)
 

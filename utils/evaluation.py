@@ -12,7 +12,7 @@ class Evaluator(torch.nn.Module):
         prediction = nn(x)
         act, idx = torch.max(prediction, dim=1)
         corrects = (label.view(-1) == idx)
-        return corrects.float().sum().item() / label.numel()
+        return corrects.float().sum().item() / label.numel(), nn.power
     
     def maa(self, nn, x, label): # no time series measuring-aware accuracy
         prediction = nn(x)
@@ -24,7 +24,7 @@ class Evaluator(torch.nn.Module):
         spk, mem = nn(x)
         act, idx = spk.sum(2).max(dim=1)
         corrects = (label.view(-1) == idx)
-        return corrects.float().sum().item() / label.numel()
+        return corrects.float().sum().item() / label.numel(), torch.tensor(0.)
     
     def nominal_temporal(self, nn, x, label): # time series data & time series model
         output = nn(x)

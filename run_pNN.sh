@@ -1,0 +1,13 @@
+sbatch exp_pNN.py --DATASET 0 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 1 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 2 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 3 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 4 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 5 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 6 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 7 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 8 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 9 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 10 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 11 --task normal --metric acc --projectname pNN
+sbatch exp_pNN.py --DATASET 12 --task normal --metric acc --projectname pNN

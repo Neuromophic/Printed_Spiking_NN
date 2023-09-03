@@ -28,7 +28,7 @@ model_idx = int(sys.argv[2])
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-for lr in range(-2,-5,-1):
+for lr in range(-2,-7,-1):
 
     exp_setup = f'{models[model_idx]}_lr_{lr}_seed_{seed}'
     print(f'The experiment setup is {exp_setup}.')
@@ -58,7 +58,7 @@ for lr in range(-2,-5,-1):
         model_config = MyTransformer.GPT.get_default_config()
         model_config.model_type = models[model_idx]
         model_config.block_size = X_train.shape[1]
-        model = MyTransformer.GPT(model_config)
+        model = MyTransformer.GPT(model_config).to(device)
 
         lossfunction = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=10**lr)

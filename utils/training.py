@@ -66,8 +66,9 @@ def train_pnn(nn, train_loader, valid_loader, lossfunction, optimizer, args, log
             logger.warning('Time limination reached.')
             break
         
-        print(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
-        logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+        if not epoch % args.report_freq:
+            print(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+            logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
         
     _, resulted_nn, _,_ = load_checkpoint(UUID, args.temppath)
     
@@ -164,8 +165,9 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
             logger.warning('Time limination reached.')
             break
         
-        print(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
-        logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+        if not epoch % args.report_freq:
+            print(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+            logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
         
     _, resulted_nn, _,_ = load_checkpoint(UUID, args.temppath)
     
