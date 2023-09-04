@@ -10,3 +10,4 @@ result_data*
 *.mlp
 *.csv
 *.model
+*.ckp

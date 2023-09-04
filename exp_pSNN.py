@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#SBATCH --job-name=pNN
+#SBATCH --job-name=pSNN
 #SBATCH --error=%x.%j.err
 #SBATCH --output=%x.%j.out
 #SBATCH --mail-user=hzhao@teco.edu

@@ -6,6 +6,7 @@ from .training import *
 from .evaluation import *
 from .logger import *
 from .Loader import *
+from .MyTransformer import *
 
 def CheckDevice(args):
     if args.DEVICE == 'cpu':

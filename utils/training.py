@@ -25,29 +25,45 @@ def train_pnn(nn, train_loader, valid_loader, lossfunction, optimizer, args, log
         
         msg = ''
         
+        total_train_loss = 0.0
+        total_train_samples = 0
         for x_train, y_train in train_loader:
-            msg += f'hyperparameters in printed neural network for training :\nepoch : {epoch:-6d} |\n'
-            
-            L_train = lossfunction(nn, x_train, y_train)
+            msg += f'{current_lr}'
+            msg += f'Hyperparameters in printed neural network for training :\n Epoch : {epoch:-6d} |\n'
+
+            L_train_batch = lossfunction(nn, x_train, y_train)
             train_acc, train_power = evaluator(nn, x_train, y_train)
+
             optimizer.zero_grad()
-            L_train.backward()
+            L_train_batch.backward()
             optimizer.step()
 
+            batch_size = x_train.size(0)
+            total_train_loss += L_train_batch.item() * batch_size
+            total_train_samples += batch_size
+
+        L_train = total_train_loss / total_train_samples
+
         with torch.no_grad():
-            for x_valid, y_valid in valid_loader:
-                msg += f'hyperparameters in printed neural network for validation :\nepoch : {epoch:-6d} |\n'
+            total_val_loss = 0.0
+            total_val_samples = 0
+            for x_val, y_val in valid_loader:  
+                L_val_batch = lossfunction(nn, x_val, y_val)
+                valid_acc, valid_power = evaluator(nn, x_val, y_val)
+
+                batch_size = x_val.size(0)
+                total_val_loss += L_val_batch.item() * batch_size
+                total_val_samples += batch_size
                 
-                L_valid = lossfunction(nn, x_valid, y_valid)
-                valid_acc, valid_power = evaluator(nn, x_valid, y_valid)
+            L_valid = total_val_loss / total_val_samples
         
         logger.debug(msg)
         
         if args.recording:
             record_checkpoint(epoch, nn, L_train, L_valid, UUID, args.recordpath)
             
-        if L_valid.item() < best_valid_loss:
-            best_valid_loss = L_valid.item()
+        if L_valid < best_valid_loss:
+            best_valid_loss = L_valid
             save_checkpoint(epoch, nn, optimizer, best_valid_loss, UUID, args.temppath)
             patience = 0
         else:
@@ -67,8 +83,8 @@ def train_pnn(nn, train_loader, valid_loader, lossfunction, optimizer, args, log
             break
         
         if not epoch % args.report_freq:
-            print(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
-            logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+            print(f'| Epoch: {epoch:-6d} | Train loss: {L_train:.4e} | Valid loss: {L_valid:.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+            logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train:.4e} | Valid loss: {L_valid:.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience:-3d} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
         
     _, resulted_nn, _,_ = load_checkpoint(UUID, args.temppath)
     
@@ -107,30 +123,45 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
         
         msg = ''
         
+        total_train_loss = 0.0
+        total_train_samples = 0
         for x_train, y_train in train_loader:
             msg += f'{current_lr}'
-            msg += f'hyperparameters in printed neural network for training :\nepoch : {epoch:-6d} |\n'
-            
-            L_train = lossfunction(nn, x_train, y_train)
+            msg += f'Hyperparameters in printed neural network for training :\n Epoch : {epoch:-6d} |\n'
+
+            L_train_batch = lossfunction(nn, x_train, y_train)
             train_acc, train_power = evaluator(nn, x_train, y_train)
+
             optimizer.zero_grad()
-            L_train.backward()
+            L_train_batch.backward()
             optimizer.step()
 
+            batch_size = x_train.size(0)
+            total_train_loss += L_train_batch.item() * batch_size
+            total_train_samples += batch_size
+
+        L_train = total_train_loss / total_train_samples
+
         with torch.no_grad():
-            for x_valid, y_valid in valid_loader:
-                msg += f'hyperparameters in printed neural network for validation :\nepoch : {epoch:-6d} |\n'
+            total_val_loss = 0.0
+            total_val_samples = 0
+            for x_val, y_val in valid_loader:  
+                L_val_batch = lossfunction(nn, x_val, y_val)
+                valid_acc, valid_power = evaluator(nn, x_val, y_val)
+
+                batch_size = x_val.size(0)
+                total_val_loss += L_val_batch.item() * batch_size
+                total_val_samples += batch_size
                 
-                L_valid = lossfunction(nn, x_valid, y_valid)
-                valid_acc, valid_power = evaluator(nn, x_valid, y_valid)
+            L_valid = total_val_loss / total_val_samples
         
         logger.debug(msg)
         
         if args.recording:
             record_checkpoint(epoch, nn, L_train, L_valid, UUID, args.recordpath)
             
-        if L_valid.item() < best_valid_loss:
-            best_valid_loss = L_valid.item()
+        if L_valid < best_valid_loss:
+            best_valid_loss = L_valid
             save_checkpoint(epoch, nn, optimizer, best_valid_loss, UUID, args.temppath)
             patience_lr = 0
         else:
@@ -166,8 +197,8 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
             break
         
         if not epoch % args.report_freq:
-            print(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
-            logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train.item():.4e} | Valid loss: {L_valid.item():.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+            print(f'| Epoch: {epoch:-6d} | Train loss: {L_train:.4e} | Valid loss: {L_valid:.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
+            logger.info(f'| Epoch: {epoch:-6d} | Train loss: {L_train:.4e} | Valid loss: {L_valid:.4e} | Train acc: {train_acc:.4f} | Valid acc: {valid_acc:.4f} | patience: {patience_lr:-3d} | lr: {current_lr} | Epoch time: {end_epoch_time-start_epoch_time:.1f} | Power: {train_power.item():.2e} |')
         
     _, resulted_nn, _,_ = load_checkpoint(UUID, args.temppath)
     

@@ -216,9 +216,9 @@ def GetDataLoader(args, mode, path=None):
         testset   = dataset(dataname, args, path, mode='test', temporal=True)
 
         # batch
-        train_loader = DataLoader(trainset, batch_size=len(trainset))
-        valid_loader = DataLoader(validset, batch_size=len(validset))
-        test_loader  = DataLoader(testset,  batch_size=len(testset))
+        train_loader = DataLoader(trainset, batch_size=64)
+        valid_loader = DataLoader(validset, batch_size=64)
+        test_loader  = DataLoader(testset,  batch_size=64)
         
         # message
         info = {}
