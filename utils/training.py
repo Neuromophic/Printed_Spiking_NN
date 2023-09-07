@@ -125,6 +125,8 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
         
         total_train_loss = 0.0
         total_train_samples = 0
+        total_train_acc = 0.0
+        total_train_power = 0.0
         for x_train, y_train in train_loader:
             msg += f'{current_lr}'
             msg += f'Hyperparameters in printed neural network for training :\n Epoch : {epoch:-6d} |\n'
@@ -140,20 +142,36 @@ def train_pnn_progressive(nn, train_loader, valid_loader, lossfunction, optimize
             total_train_loss += L_train_batch.item() * batch_size
             total_train_samples += batch_size
 
+            # Update the total train_acc and train_power
+            total_train_acc += train_acc * batch_size
+            total_train_power += train_power * batch_size
+
         L_train = total_train_loss / total_train_samples
+        train_acc = total_train_acc / total_train_samples
+        train_power = total_train_power / total_train_samples
 
         with torch.no_grad():
             total_val_loss = 0.0
             total_val_samples = 0
-            for x_val, y_val in valid_loader:  
+            total_val_acc = 0.0
+            total_val_power = 0.0
+
+            for x_val, y_val in valid_loader:
                 L_val_batch = lossfunction(nn, x_val, y_val)
                 valid_acc, valid_power = evaluator(nn, x_val, y_val)
 
                 batch_size = x_val.size(0)
                 total_val_loss += L_val_batch.item() * batch_size
                 total_val_samples += batch_size
-                
+
+                # Update the total valid_acc and valid_power
+                total_val_acc += valid_acc * batch_size
+                total_val_power += valid_power * batch_size
+
             L_valid = total_val_loss / total_val_samples
+            valid_acc = total_val_acc / total_val_samples
+            valid_power = total_val_power / total_val_samples
+
         
         logger.debug(msg)
         

@@ -1,50 +1,10 @@
-sbatch exp_pSNN.py --DATASET 08 --SEED 0 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 1 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 2 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 3 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 4 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 5 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 6 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 7 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 8 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 08 --SEED 9 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 0 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 1 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 2 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 3 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 4 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 5 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 6 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 7 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 8 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 09 --SEED 9 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 0 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 1 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 2 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 3 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 4 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 5 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 6 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 7 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 8 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 10 --SEED 9 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 0 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 1 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 2 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 3 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 4 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 5 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 6 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 7 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 8 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 11 --SEED 9 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 0 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 1 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 2 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 3 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 4 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 5 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 6 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 7 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 8 --DEVICE cpu --projectname pSNN
-sbatch exp_pSNN.py --DATASET 12 --SEED 9 --DEVICE cpu --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 0 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 1 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 2 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 3 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 4 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 5 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 6 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 7 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 8 --projectname pSNN
+sbatch exp_pSNN.py --DATASET 08 --SEED 9 --projectname pSNN
