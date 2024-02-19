@@ -15,7 +15,11 @@ Usage of the code:
 
 0. Modeling of the printed spiking g
 
-In the folder `./simulation/` locate the data from SPICE simulation based on printed Processing Design Kit (pPDK). Different temporal input signals $\bold{x}_t$ are simulated and yielded the corresponding output signal $\bold{y}_t$. This part aims to build a machine learning based surroagate model of the printed spiking generator (pSG). Simply run the jupyter notebooks one by one 
+In the folder `./simulation/` locate the data from SPICE simulation based on printed Processing Design Kit (pPDK). Different temporal input signals $x(t)$ are simulated and yielded the corresponding output signal $y(t)$. This part aims to build a machine learning based surroagate model of the printed spiking generator (pSG) with
+
+$$y(t) = pSG(x(t)).$$
+
+Simply run the jupyter notebooks one by one 
 
 
 ~~~
