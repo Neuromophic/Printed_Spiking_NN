@@ -17,7 +17,7 @@ Usage of the code:
 
 In the folder `./simulation/` locate the data from SPICE simulation based on printed Processing Design Kit (pPDK). Different temporal input signals $x(t)$ are simulated and yielded the corresponding output signal $y(t)$. This part aims to build a machine learning based surroagate model of the printed spiking generator (pSG) with
 
-$$y(t) = pSG(x(t)).$$
+$$y(t) = \rm{pSG}(x(t)).$$
 
 Simply run the jupyter notebooks one by one 
 
